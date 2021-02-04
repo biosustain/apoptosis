@@ -1,0 +1,9 @@
+notes.org
+.DS_Store
+input_data.json
+model
+model.hpp
+validation_model
+validation_model.hpp
+__pycache__*
+reading
