@@ -10,12 +10,12 @@ from util import get_99_pct_params_ln, get_99_pct_params_n
 
 PRIORS = {
     # design level parameters
-    "prior_sm": get_99_pct_params_n(-3, -0.4),
+    "prior_mu": get_99_pct_params_ln(0.65, 0.73),
     "prior_kq": get_99_pct_params_ln(1, 5),
     "prior_td": get_99_pct_params_ln(0.2, 3),
     "prior_kd": get_99_pct_params_ln(0.3, 4),
     # clone level sds
-    "prior_sd_ac_sm": get_99_pct_params_ln(0.03, 0.5),
+    "prior_sd_ac_mu": get_99_pct_params_ln(0.03, 0.2),
     "prior_sd_ac_kq": get_99_pct_params_ln(0.03, 0.5),
     "prior_sd_ac_td": get_99_pct_params_ln(0.03, 0.5),
     "prior_sd_ac_kd": get_99_pct_params_ln(0.03, 0.5),
@@ -176,11 +176,15 @@ def main():
         },
         dims={
             "R0": ["replicate"],
-            "sm": ["design"],
+            "mu": ["design"],
             "kq": ["design"],
             "td": ["design"],
             "kd": ["design"],
-            "ac_sm": ["clone"],
+            "sd_ac_mu": ["design"],
+            "sd_ac_kq": ["design"],
+            "sd_ac_td": ["design"],
+            "sd_ac_kd": ["design"],
+            "ac_mu": ["clone"],
             "ac_kq": ["clone"],
             "ac_td": ["clone"],
             "ac_kd": ["clone"],
@@ -189,11 +193,17 @@ def main():
             "llik": ["dt_ix"],
         }
     )
-    print(az.summary(infd, var_names=["sm", "kq", "td", "kd", "sd_ac_sm", "sd_ac_kq", "sd_ac_td", "sd_ac_kd"]))
+    print(az.summary(infd, var_names=[
+        "mu", "kq", "td", "kd", "sd_ac_mu", "sd_ac_kq", "sd_ac_td", "sd_ac_kd"
+    ]))
     print(az.loo(infd, pointwise=True))
     q_table = (
         pd.DataFrame({
-            p: infd.posterior[p].to_series() for p in ["sm","kq","td","kd"]
+            p: infd.posterior[p].to_series()
+            for p in [
+                "mu","kq","td","kd",
+                "sd_ac_mu", "sd_ac_kq", "sd_ac_td", "sd_ac_kd"
+            ]
         })
         .groupby(level="design")
         .quantile([0.025, 0.25, 0.5, 0.75, 0.975])
