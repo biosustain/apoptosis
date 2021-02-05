@@ -68,8 +68,8 @@ compounds of design-level means and a clone level residuals, i.e.
 \begin{align*}
 \mu_r &= \mu + a_{\mu} \\
 \tau_r &= \tau + a_{\tau} \\
-k_q_r &= k_q + a_{k_q} \\
-k_d_r &= k_d + a_{k_d}
+k_{qr} &= k_q + a_{kq} \\
+k_{dr} &= k_d + a_{kd}
 \end{align*}
 
 where $\mu$, $\tau$, $k_d$ and $k_q$ are design-level parameters and
@@ -83,4 +83,27 @@ $a_{\mu} ~ normal(0, c_{\mu})$
 Other unkowns have informative prior distributions based on scientific
 knowledge.
 
+
+## Results
+
+### Observed vs modelled timecourses
+
+Here are the observed timecourses for each design under the 15ug/mL puromycin
+treatment, alongside a sample of model-realised timecourses.
+
+![Simulated timecourses for the 15ug/mL Puromycin treatment](results/timecourses.png)
+
+The modelled and observed timecourses appear qualitatively similar, suggesting
+that the model is not dramatically mis-specified.
+
+### Posterior distributions of design parameters
+
+The following graph plots the 2.5% to 97.5% marginal posterior intervals for
+the design-level parameters.
+
+![Posterior intervals for design level parameter](results/design_param_qs.png)
+
+This graph indicates that our model thinks there are differences between the
+designs with respect to the parameters $k_d$ and $\tau_d$, while the other
+parameters are harder to distinguish based on the data provided.
 
