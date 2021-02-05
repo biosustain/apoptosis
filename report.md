@@ -88,8 +88,8 @@ knowledge.
 
 ### Observed vs modelled timecourses
 
-Here are the observed timecourses for each design under the 15ug/mL puromycin
-treatment, alongside a sample of model-realised timecourses.
+Figure 1. shows observed timecourses for each design under the 15ug/mL
+puromycin treatment, alongside a sample of model-realised timecourses.
 
 ![Simulated timecourses for the 15ug/mL Puromycin treatment](results/timecourses.png)
 
@@ -98,7 +98,7 @@ that the model is not dramatically mis-specified.
 
 ### Posterior distributions of design parameters
 
-The following graph plots the 2.5% to 97.5% marginal posterior intervals for
+Figure 2. plots the 2.5% to 97.5% marginal posterior intervals for
 the design-level parameters.
 
 ![Posterior intervals for design level parameter](results/design_param_qs.png)
