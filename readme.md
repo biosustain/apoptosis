@@ -6,7 +6,9 @@ Reveals both delayed onset and decreased rates of cell death".
 
 ## How to find the analysis
 
-Model assumptions and results can be found in report.md and report.pdf. 
+Model assumptions and results can be found in 
+[report.md](https://github.com/biosustain/apoptosis/blob/master/report.md) and 
+[report.pdf](https://github.com/biosustain/apoptosis/blob/master/report.pdf). 
 
 ## How to run the analysis
 
