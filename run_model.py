@@ -32,8 +32,8 @@ SAMPLE_CONFIG = dict(
     save_warmup=True,
     inits=0,
     chains=4,
-    adapt_delta=0.9,
-    max_treedepth=11,
+    # adapt_delta=0.9,
+    # max_treedepth=11,
     seed=12345
 )
 CSV_FILE = os.path.join("raw_data", "AllFlaskData_corrected.csv")
@@ -52,24 +52,23 @@ def plot_qs(q_table):
         .set_index(["parameter", "quantile"])
         .loc[("td", 0.5), "design"]
     )
-    f, axes = plt.subplots(1, n_param, sharey=True, figsize=[20, 7])
-    g = q_table.groupby("parameter")
-    for i, (p, df) in enumerate(g):
-        ax = axes[i]
+    f, axes = plt.subplots(2, 4, sharey=True, figsize=[20, 9])
+    axes = axes.ravel()
+    param_order = dict(zip(
+        ["mu", "kq", "td", "kd", "sd_ac_mu", "sd_ac_kq", "sd_ac_td", "sd_ac_kd"],
+        range(8)
+    ))
+    for p, df in q_table.groupby("parameter"):
+        ax = axes[param_order[p]]
         y = np.linspace(0, 1, n_design)
         dqs = df.set_index(["design", "quantile"])["value"].unstack().loc[design_order]
         ax.set_title(p)
-        lines = ax.hlines(y, dqs[0.025], dqs[0.975], label="asdfasdf")
+        lines = ax.hlines(y, dqs[0.025], dqs[0.975], color="black")
         ax.set_yticks(y)
-        if i == 0:
+        if ax == axes[0]:
             ax.set_yticklabels(list(dqs.index))
-    f.legend(
-        [lines.findobj()[0]],
-        ["95% posterior interval"],
-        frameon=False,
-        loc="lower center"
-    )
-    f.suptitle("Posterior intervals for design effects")
+    f.suptitle("2.5%-97.5% posterior intervals for design effects")
+    plt.tight_layout()
     return f, axes
             
 def plot_timecourses(dt, infd):
