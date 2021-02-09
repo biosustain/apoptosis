@@ -12,6 +12,8 @@ apoptosis-resistant, either by reducing the rate at which they die or by
 extending the period before they start to die. We would like to know which
 interventions have the most effect, and in what way.
 
+### Assumptions about the target system
+
 We assume that in this scenario the cells exist in four states:
 
 - $R$ replicative, growing at a rate of $\mu R(t)$, where t is the current time
@@ -47,38 +49,41 @@ same design.
 Given these assumptions a multi-level Bayesian statistical model is
 appropriate. 
 
+### Multilevel model structure
+
 We used the following measurement model:
 
 $$
-y \sim lognormal(\log(\hat{y}(t, R0, \mu_r, \tau_r, k_{qr}, k_{dr})), \sigma)
+y \sim lognormal(\log(\hat{y}(t, R0, \mu, \tau_r, k_{qr}, k_{dr})), \sigma)
 $$
 
 where 
 
-- $R0$, $\mu_r$, $\tau_r$, $k_{qr}$ and $k_{dr}$ are vectors of replicate-level
+- $R0$, $\tau_r$, $k_{qr}$ and $k_{dr}$ are vectors of replicate-level
   parameters
+- $\mu$ is an unknown number representing the pre-treatment growth rate, which
+  we assume is the same for all replicates.
 - $\sigma$ is an unknown log-scale error standard deviation
 - $t$ is a vector of known measurement times (one per measurement) 
 - $\hat{y}$ is a function mapping parameter configurations to densities, under
   the delay differential equation assumptions laid out above
 
-The parameters $\mu_r$, $\tau_r$, $k_{qr}$ and $k_{dr}$ vectors are treated as
-compounds of design-level means and a clone level residuals, i.e.
+The parameters $\tau_r$, $k_{qr}$ and $k_{dr}$ vectors are treated as
+compounds of a global mean and design and clone level residuals, i.e.
 
 \begin{align*}
-\mu_r &= \mu + a_{\mu} \\
-\tau_r &= \tau + a_{\tau} \\
-k_{qr} &= k_q + a_{kq} \\
-k_{dr} &= k_d + a_{kd}
+\tau_r &= \alpha_\tau + \beta_\tau + \gamma_\tau \\
+k_{qr} &= \alpha_q + \beta_q + \gamma_q \\
+k_{dr} &= \alpha_d + \beta_d + \gamma_d 
 \end{align*}
 
-where $\mu$, $\tau$, $k_d$ and $k_q$ are design-level parameters and
-e.g. $a_{\tau}$ is a vector of clone-level residuals.
+where the $\alpha$ parameters are global means, the $\beta$s are design-level
+residuals and the $\gamma$s are clone-level residuals.
 
 In order to accommodate uncertainty as to the level of clonal variation, we use
 hierarchical prior distributions for the clone level parameters, e.g.
 
-$a_{\mu} ~ normal(0, c_{\mu})$
+$\gamma_{\tau} \sim normal(0, sd_{\tau})$
 
 Other unkowns have informative prior distributions based on scientific
 knowledge.
@@ -89,21 +94,22 @@ knowledge.
 ### Observed vs modelled timecourses
 
 Figure 1. shows observed timecourses for each design under the 15ug/mL
-puromycin treatment, alongside a sample of model-realised timecourses.
+puromycin treatment, alongside a sample of model-realised timecourses. The
+modelled and observed timecourses appear qualitatively similar, suggesting that
+the model is not dramatically mis-specified.
 
 ![Simulated timecourses for the 15ug/mL Puromycin treatment](results/timecourses.png)
 
-The modelled and observed timecourses appear qualitatively similar, suggesting
-that the model is not dramatically mis-specified.
 
 ### Posterior distributions of design parameters
 
-Figure 2. plots the 2.5% to 97.5% marginal posterior intervals for
-the design-level parameters.
+Figure 2. plots the 2.5% to 97.5% marginal posterior intervals for the
+design-level parameters, relative to the control experiment. According to our
+model, some designs are probably different from the control with respect to the
+$\tau$ and $k_d$ parameters. On the other hand, all of the posterior intervals
+for design-specific effects on the parameter $k_q$ include zero, showing that
+the designs cannot conclusively be distinguished using the data provided.
 
 ![Posterior intervals for design level parameter](results/design_param_qs.png)
 
-This graph indicates that our model thinks there are differences between the
-designs with respect to the parameters $k_d$ and $\tau_d$, while the other
-parameters are harder to distinguish based on the data provided.
 
