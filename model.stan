@@ -17,10 +17,6 @@ data {
   vector[2] prior_kq;
   vector[2] prior_td;
   vector[2] prior_kd;
-  vector[2] prior_sd_ac_mu;
-  vector[2] prior_sd_ac_kq;
-  vector[2] prior_sd_ac_td;
-  vector[2] prior_sd_ac_kd;
   vector[2] prior_R0;
   vector[2] prior_err;
   int<lower=0,upper=1> likelihood;
@@ -28,24 +24,27 @@ data {
 parameters {
   vector<lower=0>[R] R0;
   real<lower=0> err;
-  // design effects
-  vector<lower=0>[D] kq;
-  vector<lower=0,upper=kq>[D] mu;
-  vector<lower=0>[D] td;
-  vector<lower=0>[D] kd;
-  // clone effects
-  vector[C] ac_mu;
-  vector[C] ac_kq;
-  vector[C] ac_td;
-  vector[C] ac_kd;
+  real<lower=0,upper=prior_kq[1]> mu;
+  real qconst;
+  real tconst;
+  real dconst;
   // sds of clone effects
-  vector<lower=0>[D] sd_ac_mu;
-  vector<lower=0>[D] sd_ac_kq;
-  vector<lower=0>[D] sd_ac_td;
-  vector<lower=0>[D] sd_ac_kd;
+  real<lower=0> sd_cq;
+  real<lower=0> sd_ct;
+  real<lower=0> sd_cd;
+  // design effects
+  vector[D-1] dq_non_control;
+  vector[D-1] dt_non_control;
+  vector[D-1] dd_non_control;
+  // clone effects
+  vector<multiplier=sd_cq>[C] cq;
+  vector<multiplier=sd_ct>[C] ct;
+  vector<multiplier=sd_cd>[C] cd;
 }
 transformed parameters {
-  vector[D] sm = mu - kq;
+  vector[D] dq = append_row([0]', dq_non_control);
+  vector[D] dt = append_row([0]', dt_non_control);
+  vector[D] dd = append_row([0]', dd_non_control);
   vector<lower=0>[N] yhat;
   for (n in 1:N){
     int r = replicate[n];
@@ -53,29 +52,31 @@ transformed parameters {
     int d = design[c];
     yhat[n] = yt(t[n],
                  R0[r],
-                 sm[d] + ac_mu[c],
-                 kq[d] + ac_kq[c],
-                 td[d] + ac_td[c],
-                 kd[d] + ac_kd[c]);
+                 mu,
+                 exp(qconst + dq[d] + cq[c]),
+                 exp(tconst + dt[d] + ct[c]),
+                 exp(dconst + dd[d] + cd[c]));
   }
 }
 model {
   // direct priors
-  target += lognormal_lpdf(R0 | prior_R0[1], prior_R0[2]);
-  target += lognormal_lpdf(err | prior_err[1], prior_err[2]);
-  target += lognormal_lpdf(mu | prior_mu[1], prior_mu[2]);
-  target += lognormal_lpdf(kq | prior_kq[1], prior_kq[2]);
-  target += lognormal_lpdf(td | prior_td[1], prior_td[2]);
-  target += lognormal_lpdf(kd | prior_kd[1], prior_kd[2]);
-  target += lognormal_lpdf(sd_ac_mu | prior_sd_ac_mu[1], prior_sd_ac_mu[2]);
-  target += lognormal_lpdf(sd_ac_kq | prior_sd_ac_kq[1], prior_sd_ac_kq[2]);
-  target += lognormal_lpdf(sd_ac_td | prior_sd_ac_td[1], prior_sd_ac_td[2]);
-  target += lognormal_lpdf(sd_ac_kd | prior_sd_ac_kd[1], prior_sd_ac_kd[2]);
+  R0 ~ lognormal(prior_R0[1], prior_R0[2]);
+  err ~ lognormal(prior_err[1], prior_err[2]);
+  mu ~ lognormal(prior_mu[1], prior_mu[2]);
+  qconst + dq[design] + cq ~ normal(prior_kq[1], prior_kq[2]);
+  tconst + dt[design] + ct ~ normal(prior_td[1], prior_td[2]);
+  dconst + dd[design] + ct ~ normal(prior_kd[1], prior_kd[2]);
+  // priors for multilevel sds
+  sd_cq ~ normal(0, 0.1);
+  sd_ct ~ normal(0, 0.1);
+  sd_cd ~ normal(0, 0.1);
   // multilevel priors
-  target += normal_lpdf(ac_mu | 0, sd_ac_mu[design]);
-  target += normal_lpdf(ac_kq | 0, sd_ac_kq[design]);
-  target += normal_lpdf(ac_td | 0, sd_ac_td[design]);
-  target += normal_lpdf(ac_kd | 0, sd_ac_kd[design]);
+  dq_non_control ~ normal(0, 1);
+  dt_non_control ~ normal(0, 1);
+  dd_non_control ~ normal(0, 1);
+  cq ~ normal(0, sd_cq);
+  ct ~ normal(0, sd_ct);
+  cd ~ normal(0, sd_cd);
   // likelihood
   if (likelihood){target += lognormal_lpdf(y | log(yhat), err);}
 }

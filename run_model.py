@@ -15,7 +15,6 @@ PRIORS = {
     "prior_td": get_99_pct_params_ln(0.2, 3),
     "prior_kd": get_99_pct_params_ln(0.3, 4),
     # clone level sds
-    "prior_sd_ac_mu": get_99_pct_params_ln(0.03, 0.2),
     "prior_sd_ac_kq": get_99_pct_params_ln(0.03, 0.5),
     "prior_sd_ac_td": get_99_pct_params_ln(0.03, 0.5),
     "prior_sd_ac_kd": get_99_pct_params_ln(0.03, 0.5),
@@ -32,8 +31,6 @@ SAMPLE_CONFIG = dict(
     save_warmup=True,
     inits=0,
     chains=4,
-    # adapt_delta=0.9,
-    # max_treedepth=11,
     seed=12345
 )
 CSV_FILE = os.path.join("raw_data", "AllFlaskData_corrected.csv")
@@ -43,25 +40,30 @@ LIKELIHOOD = True
 TREATMENT = "15ug/mL Puromycin"
 
     
-def plot_qs(q_table):
+def plot_qs(infd, params, coord):
+    q_table = (
+        pd.DataFrame({p: infd.posterior[p].to_series() for p in params})
+        .groupby(coord)
+        .quantile([0.025, 0.25, 0.5, 0.75, 0.975])
+        .stack()
+        .reset_index()
+        .rename(columns={"level_1": "quantile", "level_2": "parameter", 0: "value"})
+    )
     n_param = q_table["parameter"].nunique()
-    n_design = q_table["design"].nunique()
+    n_design = q_table[coord].nunique()
     design_order = (
         q_table
         .sort_values("value")
         .set_index(["parameter", "quantile"])
-        .loc[("td", 0.5), "design"]
+        .loc[(params[0], 0.5), coord]
     )
-    f, axes = plt.subplots(2, 4, sharey=True, figsize=[20, 9])
+    f, axes = plt.subplots(1, 3, sharey=True, sharex=True, figsize=[20, 9])
     axes = axes.ravel()
-    param_order = dict(zip(
-        ["mu", "kq", "td", "kd", "sd_ac_mu", "sd_ac_kq", "sd_ac_td", "sd_ac_kd"],
-        range(8)
-    ))
+    param_order = dict(zip(params, range(3)))
     for p, df in q_table.groupby("parameter"):
         ax = axes[param_order[p]]
         y = np.linspace(0, 1, n_design)
-        dqs = df.set_index(["design", "quantile"])["value"].unstack().loc[design_order]
+        dqs = df.set_index([coord, "quantile"])["value"].unstack().loc[design_order]
         ax.set_title(p)
         lines = ax.hlines(y, dqs[0.025], dqs[0.975], color="black")
         ax.set_yticks(y)
@@ -121,8 +123,14 @@ def plot_timecourses(dt, infd):
     return f, axes
 
 
-def stan_factorize(s):
-    return pd.Series(pd.factorize(s)[0] + 1, index=s.index)
+def stan_factorize(s_in, first=None):
+    values = list(s_in.unique())
+    codes = range(1, len(values) + 1)
+    if first is not None:
+        if first not in values:
+            raise ValueError(f"{fist} is not one of the values.")
+        values = [first] + [v for v in values if v != first]
+    return s_in.map(dict(zip(values, codes)))
 
 
 def get_design_table_from_raw(raw: pd.DataFrame, treatment: str) -> pd.DataFrame:
@@ -135,9 +143,13 @@ def get_design_table_from_raw(raw: pd.DataFrame, treatment: str) -> pd.DataFrame
             "day": raw["Day"].astype(float),
             "y": raw["VCD"].astype(float),
         })
-        .loc[lambda df: df["treatment"].eq(treatment) & df["day"].gt(0)]
+        .loc[lambda df: (
+            df["treatment"].eq(treatment)
+            & df["day"].gt(0)
+            & ~df["design"].eq("None")
+        )]
         .assign(
-            design_fct=lambda df: stan_factorize(df["design"]),
+            design_fct=lambda df: stan_factorize(df["design"], first="Empty"),
             clone_fct=lambda df: stan_factorize(df["clone"]),
             replicate_fct=lambda df: stan_factorize(df["replicate"]),
         )
@@ -169,59 +181,41 @@ def main():
         log_likelihood="llik",
         coords={
             "design": dt.groupby("design_fct")["design"].first(),
+            "design_non_control": dt.groupby("design_fct")["design"].first().loc[2:],
             "clone": dt.groupby("clone_fct")["clone"].first(),
             "replicate": dt.groupby("replicate_fct")["replicate"].first(),
             "dt_ix": dt.index
         },
         dims={
             "R0": ["replicate"],
-            "mu": ["design"],
-            "kq": ["design"],
-            "td": ["design"],
-            "kd": ["design"],
-            "sd_ac_mu": ["design"],
-            "sd_ac_kq": ["design"],
-            "sd_ac_td": ["design"],
-            "sd_ac_kd": ["design"],
-            "ac_mu": ["clone"],
-            "ac_kq": ["clone"],
-            "ac_td": ["clone"],
-            "ac_kd": ["clone"],
+            "dq": ["design"],
+            "dt": ["design"],
+            "dd": ["design"],
+            "dq_non_control": ["design_non_control"],
+            "dt_non_control": ["design_non_control"],
+            "dd_non_control": ["design_non_control"],
+            "cq": ["clone"],
+            "ct": ["clone"],
+            "cd": ["clone"],
             "yrep": ["dt_ix"],
             "yhat": ["dt_ix"],
             "llik": ["dt_ix"],
         }
     )
     print(az.summary(infd, var_names=[
-        "mu", "kq", "td", "kd", "sd_ac_mu", "sd_ac_kq", "sd_ac_td", "sd_ac_kd"
+        "mu", "err", "qconst", "tconst", "dconst", "sd_cq", "sd_ct", "sd_cd",
     ]))
     print(az.loo(infd, pointwise=True))
-    q_table = (
-        pd.DataFrame({
-            p: infd.posterior[p].to_series()
-            for p in [
-                "mu","kq","td","kd",
-                "sd_ac_mu", "sd_ac_kq", "sd_ac_td", "sd_ac_kd"
-            ]
-        })
-        .groupby(level="design")
-        .quantile([0.025, 0.25, 0.5, 0.75, 0.975])
-        .stack()
-        .reset_index()
-        .rename(columns={"level_1": "quantile", "level_2": "parameter", 0: "value"})
+    f, axes = plot_qs(
+        infd, ["dt_non_control", "dq_non_control", "dd_non_control"],
+        "design_non_control"
     )
-    f, axes = plot_qs(q_table)
     f.savefig(os.path.join(PLOT_DIR, "design_param_qs.png"), bbox_inches="tight")
     plt.close("all")
     f, axes = plot_timecourses(dt, infd)
     f.savefig(os.path.join(PLOT_DIR, "timecourses.png"), bbox_inches="tight")
     plt.close("all")
     
-
-
-
-
-
         
 if __name__ == "__main__":
     main()

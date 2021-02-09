@@ -27,7 +27,8 @@ real Qct(real t, real R0, real sm, real kq, real td, real kd){
     * exp(-kd * t);
 }
 
-real yt(real t, real R0, real sm, real kq, real td, real kd){
+real yt(real t, real R0, real mu, real kq, real td, real kd){
+  real sm = mu - kq;
   return Rt(t, R0, sm) + Qat(t, R0, sm, kq, td) + Qct(t, R0, sm, kq, td, kd);
 }
 
@@ -45,7 +46,8 @@ vector dsdt(real t, vector y, real R0, real sm, real kq, real td, real kd){
                     kd * y[3]]';
   return [flux[1]-flux[2], flux[2]-flux[3], flux[3]-flux[4]]';
 }
-real yt_num(real t, real R0, real sm, real kq, real td, real kd){
+real yt_num(real t, real R0, real mu, real kq, real td, real kd){
+  real sm = mu - kq;
   real out = sum(ode_rk45(dsdt, [R0, 0, 0]', 0, {t}, R0, sm, kq, td, kd)[1]);
   return out > 0 ? out : 0.00001;
 }
