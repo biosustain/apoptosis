@@ -8,7 +8,8 @@ data {
   int<lower=1> D;                     // number of designs
   int<lower=1> C;                     // number of clones
   int<lower=1> R;                     // number of replicates (i.e. n total cultures)
-  int<lower=1,upper=D> design[C];     // map of clone to design
+  int<lower=1> K;                     // number of design parameters
+  matrix<lower=0,upper=1>[C, K] x_clone;
   int<lower=1,upper=C> clone[R];      // map of replicate to clone
   int<lower=1,upper=R> replicate[N];  // map of observation to replicate
   vector<lower=0>[N] t;
@@ -18,14 +19,13 @@ data {
   vector[2] prior_td;
   vector[2] prior_kd;
   vector[2] prior_R0;
-  vector[2] prior_err;
   int<lower=0,upper=1> likelihood;
+  real<lower=0> err;
 }
 parameters {
   vector<lower=0>[R] R0;
-  real<lower=0> err;
-  real<lower=0,upper=prior_kq[1]> mu;
   real qconst;
+  real<lower=0,upper=exp(qconst)> mu;
   real tconst;
   real dconst;
   // sds of clone effects
@@ -33,58 +33,52 @@ parameters {
   real<lower=0> sd_ct;
   real<lower=0> sd_cd;
   // design effects
-  vector[D-1] dq_non_control;
-  vector[D-1] dt_non_control;
-  vector[D-1] dd_non_control;
+  // vector[K] dq;
+  vector[K] dt;
+  vector[K] dd;
   // clone effects
   vector<multiplier=sd_cq>[C] cq;
   vector<multiplier=sd_ct>[C] ct;
   vector<multiplier=sd_cd>[C] cd;
 }
 transformed parameters {
-  vector[D] dq = append_row([0]', dq_non_control);
-  vector[D] dt = append_row([0]', dt_non_control);
-  vector[D] dd = append_row([0]', dd_non_control);
   vector<lower=0>[N] yhat;
+  vector[C] log_kq = qconst + cq;
+  vector[C] log_td = tconst + x_clone * dt + ct;
+  vector[C] log_kd = dconst + x_clone * dd + cd;
   for (n in 1:N){
     int r = replicate[n];
     int c = clone[r];
-    int d = design[c];
-    yhat[n] = yt(t[n],
-                 R0[r],
-                 mu,
-                 exp(qconst + dq[d] + cq[c]),
-                 exp(tconst + dt[d] + ct[c]),
-                 exp(dconst + dd[d] + cd[c]));
+    yhat[n] = yt(t[n], R0[r], mu, exp(log_kq[c]), exp(log_td[c]), exp(log_kd[c]));
   }
 }
 model {
   // direct priors
-  R0 ~ lognormal(prior_R0[1], prior_R0[2]);
-  err ~ lognormal(prior_err[1], prior_err[2]);
+  R0 ~ lognormal(log(2.5), err);
   mu ~ lognormal(prior_mu[1], prior_mu[2]);
-  qconst + dq[design] + cq ~ normal(prior_kq[1], prior_kq[2]);
-  tconst + dt[design] + ct ~ normal(prior_td[1], prior_td[2]);
-  dconst + dd[design] + ct ~ normal(prior_kd[1], prior_kd[2]);
+  qconst ~ normal(prior_kq[1], prior_kq[2]);
+  tconst ~ normal(prior_td[1], prior_td[2]);
+  dconst ~ normal(prior_kd[1], prior_kd[2]);
   // priors for multilevel sds
-  sd_cq ~ normal(0, 0.1);
-  sd_ct ~ normal(0, 0.1);
-  sd_cd ~ normal(0, 0.1);
+  sd_cq ~ lognormal(-2.1, 0.35);  // ~99% of prior mass between 0.05 and 0.25
+  sd_ct ~ lognormal(-2.1, 0.35);
+  sd_cd ~ lognormal(-2.1, 0.35);
   // multilevel priors
-  dq_non_control ~ normal(0, 1);
-  dt_non_control ~ normal(0, 1);
-  dd_non_control ~ normal(0, 1);
+  dt ~ normal(0, 0.3);
+  dd ~ normal(0, 0.3);
   cq ~ normal(0, sd_cq);
   ct ~ normal(0, sd_ct);
   cd ~ normal(0, sd_cd);
   // likelihood
-  if (likelihood){target += lognormal_lpdf(y | log(yhat), err);}
+  if (likelihood){
+    log(y) ~ student_t(4, log(yhat), err);
+  }
 }
 generated quantities {
   vector[N] yrep;
-  vector[N] llik;
+  vector[R] llik = rep_vector(0, R);
   for (n in 1:N){
-    yrep[n] = lognormal_rng(log(yhat[n]), err);
-    llik[n] = lognormal_lpdf(y[n] | log(yhat[n]), err);
+    yrep[n] = exp(student_t_rng(4, log(yhat[n]), err));
+    llik[replicate[n]] += student_t_lpdf(log(y[n]) | 4, log(yhat[n]), err);
   }
 }
