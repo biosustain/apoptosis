@@ -65,7 +65,7 @@ model {
   mu ~ lognormal(prior_mu[1], prior_mu[2]);
   qconst + dq[design] + cq ~ normal(prior_kq[1], prior_kq[2]);
   tconst + dt[design] + ct ~ normal(prior_td[1], prior_td[2]);
-  dconst + dd[design] + ct ~ normal(prior_kd[1], prior_kd[2]);
+  dconst + dd[design] + cd ~ normal(prior_kd[1], prior_kd[2]);
   // priors for multilevel sds
   sd_cq ~ normal(0, 0.1);
   sd_ct ~ normal(0, 0.1);

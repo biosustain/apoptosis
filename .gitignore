@@ -7,3 +7,5 @@ validation_model
 validation_model.hpp
 __pycache__*
 reading
+.vscode
+settings.json
