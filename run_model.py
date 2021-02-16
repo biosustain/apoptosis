@@ -18,6 +18,7 @@ PRIORS = {
     "prior_kd": get_99_pct_params_ln(0.3, 4),
     # initial densities
     "prior_R0": get_99_pct_params_ln(2, 3),
+    "prior_err": get_99_pct_params_ln(0.05, 0.13)
 }
 OUTPUT_DIR = os.path.join("results", "samples")
 SAMPLE_CONFIG = dict(
@@ -31,13 +32,13 @@ SAMPLE_CONFIG = dict(
 )
 X_CLONE_COLS_AB = ["is_A", "is_B", "is_AB"]
 X_CLONE_COLS_ABC = X_CLONE_COLS_AB + ["is_C", "is_AC", "is_BC", "is_ABC"]
-SUMMARY_VARS = ["mu", "qconst", "tconst", "dconst", "sd_cq", "sd_ct", "sd_cd", "dt", "dd"]
+SUMMARY_VARS = ["mu", "qconst", "tconst", "dconst", "sd_cv", "corr_cv", "dt", "dd"]
 CSV_FILE = os.path.join("raw_data", "AllFlaskData_compiled.csv")
 NCDF_FILE = os.path.join("results", "infd.ncdf")
-STAN_FILE = "model_abc.stan"
+STAN_FILE = "model.stan"
 LIKELIHOOD = True
 TREATMENT = "15ug/mL Puromycin"
-MEASUREMENT_ERROR = 0.1
+# MEASUREMENT_ERROR = 0.1
 
 
 def get_stan_input(msmts, priors, x_clone_cols):
@@ -55,7 +56,7 @@ def get_stan_input(msmts, priors, x_clone_cols):
         "t": msmts["day"].values,
         "y": msmts["y"].values,
         "likelihood": int(LIKELIHOOD),
-        "err": MEASUREMENT_ERROR
+        # "err": MEASUREMENT_ERROR
     }}
 
 
@@ -67,16 +68,16 @@ def load_infd(mcmc, msmts, x_clone_cols):
             "design": x_clone_cols,
             "clone": msmts.groupby("clone_fct")["clone"].first(),
             "replicate": msmts.groupby("replicate_fct")["replicate"].first(),
-            "msmts_ix": msmts.index
+            "msmts_ix": msmts.index,
+            "cv_effects": ["q", "tau", "d"]
         },
         dims={
             "R0": ["replicate"],
             "msmts": ["design"],
             "dd": ["design"],
             "dt": ["design"],
-            "cq": ["clone"],
-            "ct": ["clone"],
-            "cd": ["clone"],
+            "cv": ["clone", "cv_effects"],
+            "sd_cv": ["cv_effects"],
             "yrep": ["msmts_ix"],
             "yhat": ["msmts_ix"],
             "llik": ["replicate"],
