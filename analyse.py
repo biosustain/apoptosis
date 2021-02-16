@@ -41,8 +41,7 @@ def main():
             bbox_inches="tight"
         )
         plt.close("all")
-    comparison = az.compare(dict(zip(names, infds)), ic="loo")
-    print(comparison)
+    print(az.compare(dict(zip(names, infds)), ic="loo"))
 
 
 if __name__ == "__main__":
