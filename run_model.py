@@ -32,7 +32,9 @@ SAMPLE_CONFIG = dict(
 )
 X_CLONE_COLS_AB = ["is_A", "is_B", "is_AB"]
 X_CLONE_COLS_ABC = X_CLONE_COLS_AB + ["is_C", "is_AC", "is_BC", "is_ABC"]
-SUMMARY_VARS = ["mu", "qconst", "tconst", "dconst", "sd_cv", "corr_cv", "dt", "dd"]
+SUMMARY_VARS = [
+    "mu_err", "a_err", "mu", "qconst", "tconst", "dconst", "sd_cv", "corr_cv", "dt", "dd"
+]
 CSV_FILE = os.path.join("raw_data", "AllFlaskData_compiled.csv")
 NCDF_FILE = os.path.join("results", "infd.ncdf")
 STAN_FILE = "model.stan"
@@ -100,7 +102,6 @@ def main():
         infd.to_netcdf(f"infd_{name}.ncdf")
         infds.append(infd)
         print(az.summary(infd, var_names=SUMMARY_VARS))
-    print(az.compare(dict(zip(names, infds)), ic="loo"))
     
         
 if __name__ == "__main__":

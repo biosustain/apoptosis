@@ -23,7 +23,8 @@ data {
   int<lower=0,upper=1> likelihood;
 }
 parameters {
-  real<lower=0> err;
+  real mu_err;
+  real a_err;
   vector<lower=0>[R] R0;
   real qconst;
   real<lower=0,upper=exp(qconst)> mu;
@@ -38,6 +39,7 @@ parameters {
   cholesky_factor_corr[3] L_cv;
 }
 transformed parameters {
+  vector[N] err;
   matrix[C, 3] cv = cv_z * diag_pre_multiply(sd_cv, L_cv);
   vector<lower=0>[N] yhat;
   vector[C] log_kq = qconst + cv[,1];
@@ -48,23 +50,25 @@ transformed parameters {
     int c = clone[r];
     yhat[n] = yt(t[n], R0[r], mu, exp(log_kq[c]), exp(log_td[c]), exp(log_kd[c]));
   }
+  err = exp(mu_err + a_err * log(yhat));
 }
 model {
   // direct priors
-  err ~ lognormal(prior_err[1], prior_err[2]);
-  R0 ~ lognormal(log(2.5), err);
+  mu_err ~ normal(prior_err[1], prior_err[2]);
+  a_err ~ normal(0, 1);
+  R0 ~ lognormal(prior_R0[1], prior_R0[2]);
   mu ~ lognormal(prior_mu[1], prior_mu[2]);
   qconst ~ normal(prior_kq[1], prior_kq[2]);
   tconst ~ normal(prior_td[1], prior_td[2]);
   dconst ~ normal(prior_kd[1], prior_kd[2]);
-  // priors for multilevel sds
-  sd_cv ~ lognormal(-2.1, 0.35);  // ~99% of prior mass between 0.05 and 0.25
-  L_cv ~ lkj_corr_cholesky(2);
-  // multilevel priors
   dt ~ normal(0, 0.3);
   dd ~ normal(0, 0.3);
+  // multilevel priors
+  sd_cv ~ lognormal(-2.1, 0.35);  // ~99% of prior mass between 0.05 and 0.25
+  L_cv ~ lkj_corr_cholesky(2);
   to_vector(cv_z) ~ normal(0, 1);
   // likelihood
+  rep_vector(log(2.5), R) ~ student_t(4, log(R0), exp(mu_err + a_err * log(R0)));
   if (likelihood){
     log(y) ~ student_t(4, log(yhat), err);
   }
@@ -74,7 +78,7 @@ generated quantities {
   vector[R] llik = rep_vector(0, R);
   matrix[3,3] corr_cv = L_cv * L_cv';
   for (n in 1:N){
-    yrep[n] = exp(student_t_rng(4, log(yhat[n]), err));
-    llik[replicate[n]] += student_t_lpdf(log(y[n]) | 4, log(yhat[n]), err);
+    yrep[n] = exp(student_t_rng(4, log(yhat[n]), err[n]));
+    llik[replicate[n]] += student_t_lpdf(log(y[n]) | 4, log(yhat[n]), err[n]);
   }
 }

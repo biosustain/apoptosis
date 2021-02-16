@@ -24,7 +24,6 @@ def prepare_data(raw: pd.DataFrame, treatment: str) -> pd.DataFrame:
         .loc[lambda df: (
             df["treatment"].eq(treatment)
             & df["day"].gt(0)
-            & df["y"].gt(0.1)
             & ~df["design"].eq("None")
         )]
         .assign(
