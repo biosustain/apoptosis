@@ -15,33 +15,39 @@ def main():
 
     plt.style.use(MPL_STYLE)
     measurements = prepare_data(pd.read_csv(CSV_FILE), treatment=TREATMENT)
-    infds = []
-    names = ["ab", "abc"]
-    for name in names:
-        print(f"Analysing model {name}...")
-        infd = az.from_netcdf(f"infd_{name}.ncdf")
-        infds.append(infd)
-        loo = az.loo(infd, pointwise=True)
-        loo_df = pd.DataFrame({
-            "clone": measurements.groupby("replicate")["clone"].first(),
-            "design": measurements.groupby("replicate")["design"].first(),
-            "pareto_k": loo.pareto_k.to_series(),
-            "elpd": loo.loo_i.to_series(),
-        })
-        print(loo_df.sort_values("pareto_k"))
-        # plots
-        f, axes = plot_qs(infd, ["dt", "dd"], "design")
-        f.savefig(
-            os.path.join(PLOT_DIR, f"design_param_qs_{name}.png"),
-            bbox_inches="tight"
-        )
-        f, axes = plot_timecourses(measurements, infd)
-        f.savefig(
-            os.path.join(PLOT_DIR, f"timecourses_{name}.png"),
-            bbox_inches="tight"
-        )
-        plt.close("all")
-    print(az.compare(dict(zip(names, infds)), ic="loo"))
+    infds = {}
+    x_names = ["ab", "abc"]
+    model_names = ["m1", "m2"]
+    for model_name in model_names:
+        design_params = ["dt", "dd"]
+        if model_name == "m1":
+            design_params += ["dq"]
+        for x_name in x_names:
+            name = f"{model_name}_{x_name}"
+            print(f"Analysing model {model_name} with data {x_name}...")
+            infd = az.from_netcdf(f"infd_{name}.ncdf")
+            infds[name] = infd
+            loo = az.loo(infd, pointwise=True)
+            loo_df = pd.DataFrame({
+                "clone": measurements.groupby("replicate")["clone"].first(),
+                "design": measurements.groupby("replicate")["design"].first(),
+                "pareto_k": loo.pareto_k.to_series(),
+                "elpd": loo.loo_i.to_series(),
+            })
+            print(loo_df.sort_values("pareto_k"))
+            # plots
+            f, axes = plot_qs(infd, design_params, "design")
+            f.savefig(
+                os.path.join(PLOT_DIR, f"design_param_qs_{name}.png"),
+                bbox_inches="tight"
+            )
+            f, axes = plot_timecourses(measurements, infd)
+            f.savefig(
+                os.path.join(PLOT_DIR, f"timecourses_{name}.png"),
+                bbox_inches="tight"
+            )
+            plt.close("all")
+    print(az.compare(infds, ic="loo"))
 
 
 if __name__ == "__main__":

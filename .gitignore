@@ -7,3 +7,7 @@ validation_model
 validation_model.hpp
 __pycache__*
 reading
+results/loo/*.pkl
+results/loo/*.csv
+results/infd/*.ncdf
+results/plots/*.png

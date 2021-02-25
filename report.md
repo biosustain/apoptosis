@@ -3,15 +3,16 @@
 This document sets out our statistical model's assumptions, explains its
 implementation and presents the results.
 
-## Model assumptions
+## Background
 
 The aim of this analysis is to describe timecourse data about the density of
-CHO cell cultures that were given treatments that induce cell death. Some
-cultures were given genetic interventions that aim to make them
-apoptosis-resistant, either by reducing the rate at which they die or by
-extending the period before they start to die. We would like to know which
-interventions have the most effect, and in what way.
+CHO cell cultures that were given treatments that induce cell death through a
+process called apoptosis. Some cultures were given genetic interventions that
+aim to make them apoptosis-resistant, either by reducing the rate at which they
+die or by extending the period before they start to die. We would like to know
+which interventions have the most effect, and in what way.
 
+## Methods
 ### Assumptions about the target system
 
 We assume that in this scenario the cells exist in four states:
@@ -26,10 +27,11 @@ We assume that in this scenario the cells exist in four states:
   $Q_c(t)$ is the density of death-committed cells at time $t$.
 
 These assumptions define a system of ordinary differential equations
-(specifically "delay differential equations") that can be solved analytically,
-so that the density at a given time can be found as a function of the
-parameters $\mu$, $\tau$ $k_q$, $k_d$ and the initial density of replicative cells
-$R0$.
+(specifically [delay differential
+equations](https://en.wikipedia.org/wiki/Delay_differential_equation)) that can
+be solved analytically, so that the density at a given time can be found as a
+function of the parameters $\mu$, $\tau$ $k_q$, $k_d$ and the initial density
+of replicative cells $R0$.
 
 We have measurements of the total cell volume, i.e. $R(t) + Q_a(t) + Q_c(t)$ at
 several time points, for cell cultures with the following structure:
@@ -49,47 +51,179 @@ same design.
 Given these assumptions a multi-level Bayesian statistical model is
 appropriate. 
 
-### Multilevel model structure
-
+### Measurement model
 We used the following measurement model:
 
 $$
-y \sim lognormal(\log(\hat{y}(t, R0, \mu, \tau_r, k_{qr}, k_{dr})), \sigma)
+y \sim log\, normal(\log(\hat{y}(t, R0, \mu, \tau, k_{q}, k_{d})), \sigma)
 $$
 
 where 
 
-- $R0$, $\tau_r$, $k_{qr}$ and $k_{dr}$ are vectors of replicate-level
-  parameters
-- $\mu$ is an unknown number representing the pre-treatment growth rate, which
+- $R0$, $\tau$, $k_{q}$ and $k_{d}$ are vectors of clone-level parameters.
+- $\mu$ is a model parameter representing the pre-treatment growth rate, which
   we assume is the same for all replicates.
-- $\sigma$ is an unknown log-scale error standard deviation
-- $t$ is a vector of known measurement times (one per measurement) 
+- $\sigma$ is an unknown log-scale error standard deviation.
+- $t$ is a vector of known measurement times (one per measurement).
 - $\hat{y}$ is a function mapping parameter configurations to densities, under
-  the delay differential equation assumptions laid out above
+  the delay differential equation assumptions laid out above.
 
-The parameters $\tau_r$, $k_{qr}$ and $k_{dr}$ vectors are treated as
-compounds of a global mean and design and clone level residuals, i.e.
+We believe that the measurement error will be proportional to the true viable
+cell density for most measurements, motivating the use of the lognormal
+generalised linear model. However, we hypothesise that for cell densities below
+0.3 this will not be the case, as for these measurements the error is dominated
+by factors that do not depend on the true cell density, such as impurities in
+the apparatus.
+
+To allow the model to incorporate this postulated effect we use the following
+distributional model:
+
+$$
+\sigma = exp(a_\sigma + b_\sigma * \min(0, \ln(\hat{y}-0.3)))
+$$
+
+In this equation the parameter $b_\sigma$ represents the degree to which the
+log-scale measurement error increases or decreases as the true value gets
+lower than 0.3.
+
+![True density vs ln scale measurement standard deviation for a range of $b_\sigma$ values](./results/y_vs_log_sd.png)
+
+Code to generate figure 1:
+``` python
+    import numpy as np
+    from matplotlib import pyplot as plt
+
+    y = np.linspace(0.04, 0.4, 20)
+    bs = [-0, -0.05, -0.1, -0.15, -0.2]
+    diff = np.array([np.log(yi/0.3) if yi < 0.3 else 0 for yi in y])
+    for b in bs:
+        plt.plot(y, 0.2 + b * diff, label=str(b))
+    plt.legend(title="$b_\sigma$")
+    plt.xlabel("True density")
+    plt.xlabel("ln scale standard deviation")
+    plt.savefig("results/y_vs_log_sd.png")
+```
+
+### Design level parameters
+
+The clone-level vectors $\tau_r$ and $k_{d}$ are treated as determined by other
+parameters as follows:
 
 \begin{align*}
-\tau_r &= \alpha_\tau + \beta_\tau + \gamma_\tau \\
-k_{qr} &= \alpha_q + \beta_q + \gamma_q \\
-k_{dr} &= \alpha_d + \beta_d + \gamma_d 
+\ln(\tau) &= \tau const + d_\tau * X + c_{tau} \\
+\ln(k_{d}) &= dconst + d_d * X + c_d
 \end{align*}
 
-where the $\alpha$ parameters are global means, the $\beta$s are design-level
-residuals and the $\gamma$s are clone-level residuals.
+In these equations 
 
-In order to accommodate uncertainty as to the level of clonal variation, we use
-hierarchical prior distributions for the clone level parameters, e.g.
+- $qconst$, $\tau const$ and $dconst$ are single unknown numbers representing
+  the (log scale) mean parameter values with no interventions
+- $X$ is a matrix indicating which clones have which interventions
+- $d_\tau$ and $d_d$ are vectors of unknown intervention effects
+- $c_\tau$ and $c_d$ are vectors of unknown clone effects, representing random
+  clonal variation.
+  
+The priors for the parameters $d_\tau$ and $d_d$ were as follows:
 
-$\gamma_{\tau} \sim normal(0, sd_{\tau})$
+\begin{align*}
+    d_\tau &\sim N(0, 0.3) \\
+    d_d &\sim N(0, 0.3)
+\end{align*}
+  
+To investigate whether the genetic interventions measurably affected the rate
+at which cells transition from the normal state $R$ to the growth arrest state
+$Q_a$, we compared two different ways of modelling the clone-level vectors
+$k_q$. In the first model design M1, $k_q$ is treated like $\tau$ and $k_d$,
+i.e
+  
+\begin{align*}
+ \ln k_q &= qconst + d_q * X + c_q \\
+ d_q &\sim N(0, 0.3)
+\end{align*}
+
+In the second design M2, we assume that there are no design-level effects, i.e.
+
+$$
+    \ln k_q = qconst + c_q
+$$
+
+### Clonal variation parameters
+
+The clone-level parameters $c_\tau$, $c_q$ and $c_d$ have joint multivariate
+normal prior distribution:
+
+\begin{align*}
+[c_\tau, c_q, c_d] &\sim multi\, normal(\mathbf{0}, \mathbf{\sigma_c} \cdot\Omega) \\
+\Omega &\sim lkj(2) \\
+\mathbf{\sigma_c} \&sim log\, normal(-2.1, 0.35)
+\end{align*}
+
+We used a multivariate normal distribution because we wanted to allow the
+possibility of correlations between clonal variation parameters: for example,
+if a certain clone has a very high death rate, this might predict a higher or
+lower rate of death-commitment.
+
+The prior for $\sigma_c$ is informative, and was chosen based on scientific
+knowledge so as to place 99% prior mass between 0.05 and 0.25.
+
+In this equation $lkj$ represents the Lewandowski, Kurowicka, and Joe
+distribution with shape parameter 2. See
+[@lewandowskiGeneratingRandomCorrelation2009] for discussion of why this is an
+appropriate default prior for correlation matrices.
+
+
+
+### Informative priors for non-design parameters
 
 Other unkowns have informative prior distributions based on scientific
-knowledge.
+knowledge:
 
+\begin{align*}
+\mu &\sim log\, normal() \\
+R0 &\sim log\, normal() \\
+qconst &\sim normal() \\
+\tau const &\sim normal() \\
+dconst &\sim normal() \\
+d_\tau &\sim normal() \\
+d_d &\sim normal() \\
+\end{align*}
+
+
+
+### Data representation
+
+We believed that there should be no noticeable effects due to the "bok"
+intervention, as this intervention knocks out a gene that is very weakly
+expressed in the control case. To verify that this was the case we compared the
+results of fitting the models M1 and M2 with and without distinguishing the
+"bok" design from the other designs.
+
+### Model comparison
+
+To compare different models we calculated the approximate
+leave-one-timecourse-out log predictive density for models M1 and M2 on
+puromycin and sodium butyrate treatments using the python package arviz. See
+[@vehtariPracticalBayesianModel2017] for more about this model comparison
+method. For timecourses where the pareto-k diagnostic was higher than 0.7,
+indicating that the approximation was inaccurate, we refitted the model in
+order to find the exact leave-one-out log predictive density.
+
+We further evaluated our models using graphical posterior predictive checks and
+by inspecting the modelled parameter values.
+
+For both treatments, the two models' estimated predictive performance was very
+similar.
 
 ## Results
+
+### Model comparison
+We tested four model designs on two treatments, using the semi-approximate
+leave-one-timecourse-out process described above. The results of this analysis
+were as follows:
+
+TABLE OF LOO RESULTS GOES HERE
+
+EXPLAIN LOO RESULTS
 
 ### Observed vs modelled timecourses
 
@@ -99,6 +233,8 @@ modelled and observed timecourses appear qualitatively similar, suggesting that
 the model is not dramatically mis-specified.
 
 ![Simulated timecourses for the 15ug/mL Puromycin treatment](results/timecourses.png)
+
+TIMECOURSES FOR EACH MODEL AND FOR SODIUM BUTYRATE
 
 
 ### Posterior distributions of design parameters
@@ -112,4 +248,4 @@ the designs cannot conclusively be distinguished using the data provided.
 
 ![Posterior intervals for design level parameter](results/design_param_qs.png)
 
-
+DESIGN LEVEL PARAMS IN EACH MODEL AND FOR SODIUM BUTYRATE
