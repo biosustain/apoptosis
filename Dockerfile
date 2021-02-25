@@ -6,8 +6,8 @@ COPY requirements.txt apoptosis/
 
 RUN pip3 install -r apoptosis/requirements.txt
 
-RUN install_cmdstan -v 2.26.0
+RUN install_cmdstan -v 2.26.1
 
 COPY . apoptosis/
 
-CMD cd apoptosis && make clean_stan && python3 run_model.py
+CMD cd apoptosis && make clean_stan && python3 fit_models.py && python3 draw_plots.py
