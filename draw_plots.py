@@ -81,9 +81,11 @@ def plot_timecourses(msmts, infd):
         col = design_to_col[design]
         ax = axes[row, col]
         y = y_timecourses.loc[(design, clone, replicate)]
-        samples = df.sample(10)
-        for _, sample in samples.iterrows():
-            simline = ax.plot(sample, alpha=0.1, color="black", linewidth=0.5)
+        low = df.quantile(0.005)
+        high = df.quantile(0.995)
+        fill = ax.fill_between(
+            df.columns, low, high, alpha=0.2, zorder=0, color="grey"
+        )
         yline = ax.plot(y, color="black", label="Clone " + clone)
         if row == 0:
             ax.set_title(design)
@@ -94,7 +96,7 @@ def plot_timecourses(msmts, infd):
         ax.annotate("Clone: " + clone, [4, 4], fontsize=7)
         plt.semilogy()
     f.legend(
-        [yline[0], simline[0]], ["observation", "sampled model realisation"],
+        [yline[0], fill], ["observation", "99% Posterior predictive interval"],
         frameon=False, loc="upper left", ncol=2
     )
     f.suptitle("Modelled vs observed timecourses")

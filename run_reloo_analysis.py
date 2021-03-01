@@ -1,8 +1,11 @@
 from loo_compare import compare
 from cmdstanpy import CmdStanModel
 import arviz as az
+from munging import prepare_data
+import pandas as pd
 from fit_models import (
     get_stan_input,
+    get_infd_kwargs,
     PRIORS,
     CSV_FILE,
     TREATMENTS,
@@ -11,6 +14,7 @@ from fit_models import (
     LOO_DIR,
     INFD_DIR
 )
+import os
 
 SAMPLE_CONFIG = dict(
     show_progress=False,
@@ -48,7 +52,7 @@ class CustomSamplingWrapper(az.SamplingWrapper):
         """Construct a stan input where replicate idx is out-of-sample."""
         original = get_stan_input(self.msmts, self.priors, self.x_cols)
         m_test = self.msmts.loc[lambda df: df["replicate_fct"].eq(idx[0] + 1)]
-        m_train = self.msmts.drop(m_train.index)
+        m_train = self.msmts.drop(m_test.index)
         d_test = original.copy()
         d_test["t"] = m_train["day"].values
         d_test["t_test"] = m_test["day"].values
@@ -71,18 +75,16 @@ def main():
                 print("Running reloo analysis for model {run_name}...")
                 model = CmdStanModel(stan_file=stan_file)
                 msmts = prepare_data(pd.read_csv(CSV_FILE), treatment=treatment)
-                loo_orig = pd.from_pickle(loo_file)
-                infd_orig = pd.from_pickle(loo_file)
+                loo_orig = pd.read_pickle(loo_file)
+                infd_orig = pd.read_pickle(loo_file)
                 infd_kwargs = get_infd_kwargs(msmts, x_cols)
                 msmts_raw = pd.read_csv(CSV_FILE)
-                infds[run_name] = infd
                 sw = CustomSamplingWrapper(
                     model=model,
                     idata_orig=infd_orig,
-                    loo_orig=loo_orig,
                     sample_kwargs=SAMPLE_CONFIG,
                     idata_kwargs=infd_kwargs,
-                    msmts=measurements,
+                    msmts=msmts,
                     priors=PRIORS,
                     x_cols=x_cols
                 )

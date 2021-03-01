@@ -1,19 +1,17 @@
 from munging import prepare_data
 import pandas as pd
 from cmdstanpy import CmdStanModel
-from cmdstanpy.utils import jsondump
+from cmdstanpy.utils import jsondump, get_logger
 import arviz as az
 import numpy as np
 import os
 from util import get_99_pct_params_ln
 
 PRIORS = {
-    # design level parameters
     "prior_mu": get_99_pct_params_ln(0.65, 0.73),
     "prior_kq": get_99_pct_params_ln(1, 5),
     "prior_td": get_99_pct_params_ln(0.2, 5),
     "prior_kd": get_99_pct_params_ln(0.3, 4),
-    # initial densities
     "prior_R0": get_99_pct_params_ln(2, 3),
     "prior_err": get_99_pct_params_ln(0.05, 0.13)
 }
@@ -21,8 +19,9 @@ SAMPLE_CONFIG = dict(
     show_progress=False,
     save_warmup=False,
     inits=0,
-    iter_warmup=500,
-    iter_sampling=500,
+    iter_warmup=800,
+    iter_sampling=700,
+    adapt_delta=0.9,
     chains=2,
     seed=12345
 )
@@ -37,8 +36,8 @@ TREATMENTS = {
     "sodium_butyrate": "20mM Sodium Butyrate",
 }
 X_COLS = {
-    "ab": ["is_A", "is_B", "is_AB"],
-    "abc": ["is_A", "is_B", "is_AB", "is_C", "is_AC", "is_BC", "is_ABC"]
+    "ab": ["is_B", "is_AB"],
+    "abc": ["is_B", "is_AB", "is_C", "is_AC", "is_BC", "is_ABC"]
 }
 STAN_FILES = {
     "m1":  "model_kq_design_effects.stan",
@@ -94,6 +93,8 @@ def get_infd_kwargs(msmts, x_cols):
 
 
 def main():
+    logger = get_logger()
+    logger.setLevel(40)  # only log messages with at-least-error severity
     for treatment_label, treatment in TREATMENTS.items():
         infds = {}
         for model_name, stan_file in STAN_FILES.items():
@@ -105,22 +106,22 @@ def main():
                     OUTPUT_DIR, f"input_data_{run_name}.json"
                 )
                 print(f"Fitting model {run_name}...")
-                model = CmdStanModel(stan_file=stan_file)
+                model = CmdStanModel(stan_file=stan_file, logger=logger)
                 msmts = prepare_data(pd.read_csv(CSV_FILE), treatment=treatment)
                 stan_input = get_stan_input(msmts, PRIORS, x_cols)
                 jsondump(json_file, stan_input)
                 mcmc = model.sample(data=stan_input, **SAMPLE_CONFIG)
-                mcmc.diagnose()
+                print(mcmc.diagnose().replace("\n\n", "\n"))
                 infd_kwargs = get_infd_kwargs(msmts, x_cols)
                 infd = az.from_cmdstanpy(mcmc, **infd_kwargs)
                 infds[run_name] = infd
                 loo = az.loo(infd, pointwise=True)
-                print(f"Writing inference data to {infd_file}...")
+                print(f"Writing inference data to {infd_file}")
                 infd.to_netcdf(infd_file)
-                print(f"Writing psis-loo results to {loo_file}...")
+                print(f"Writing psis-loo results to {loo_file}\n")
                 loo.to_pickle(loo_file)
         comparison = az.compare(infds)
-        print("Loo comparison for model {run_name}:")
+        print(f"Loo comparison for treatment {treatment}:")
         print(comparison)
         comparison.to_csv(
             os.path.join(LOO_DIR, f"loo_comparison_{treatment_label}.csv")
