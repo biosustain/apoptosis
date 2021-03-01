@@ -22,7 +22,7 @@ SAMPLE_CONFIG = dict(
     inits=0,
     iter_warmup=300,
     iter_sampling=300,
-    chains=2,
+    chains=1,
     seed=12345
 )
 K_THRESHOLD = 0.7

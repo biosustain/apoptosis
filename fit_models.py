@@ -19,9 +19,8 @@ SAMPLE_CONFIG = dict(
     show_progress=False,
     save_warmup=False,
     inits=0,
-    iter_warmup=800,
-    iter_sampling=700,
-    adapt_delta=0.9,
+    iter_warmup=600,
+    iter_sampling=600,
     chains=2,
     seed=12345
 )
