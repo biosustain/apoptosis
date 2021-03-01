@@ -72,7 +72,7 @@ def main():
                 run_name = f"{treatment_label}_{model_name}_{xname}"
                 loo_file = os.path.join(LOO_DIR, f"loo_{run_name}.pkl")
                 infd_file = os.path.join(INFD_DIR, f"infd_{run_name}.ncdf")
-                print("Running reloo analysis for model {run_name}...")
+                print(f"Running reloo analysis for model {run_name}...")
                 model = CmdStanModel(stan_file=stan_file)
                 msmts = prepare_data(pd.read_csv(CSV_FILE), treatment=treatment)
                 loo_orig = pd.read_pickle(loo_file)
@@ -92,7 +92,7 @@ def main():
                 rl.to_pickle(os.path.join(LOO_DIR, f"reloo_{run_name}.pkl"))
                 loos[run_name] = rl
         comparison = compare(loos)
-        print("Loo comparison for model {run_name}:")
+        print(f"Loo comparison for model {run_name}:")
         print(comparison)
         comparison.to_csv(
             os.path.join(LOO_DIR, f"reloo_comparison_{treatment_label}.csv")

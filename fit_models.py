@@ -35,8 +35,8 @@ TREATMENTS = {
     "sodium_butyrate": "20mM Sodium Butyrate",
 }
 X_COLS = {
-    "ab": ["is_B", "is_AB"],
-    "abc": ["is_B", "is_AB", "is_C", "is_AC", "is_BC", "is_ABC"]
+    "ab": ["is_A", "is_B", "is_AB"],
+    "abc": ["is_A", "is_B", "is_AB", "is_C", "is_AC", "is_BC", "is_ABC"]
 }
 STAN_FILES = {
     "m1":  "model_kq_design_effects.stan",
