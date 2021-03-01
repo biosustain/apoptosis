@@ -217,35 +217,92 @@ similar.
 ## Results
 
 ### Model comparison
-We tested four model designs on two treatments, using the semi-approximate
-leave-one-timecourse-out process described above. The results of this analysis
-were as follows:
+We tested four model designs on two treatments, finding their estimated log
+predictive density, or elpd, using the semi-approximate leave-one-timecourse-out
+process described above.
 
-TABLE OF LOO RESULTS GOES HERE
+The tables below show the results of this analysis. The models are listed in
+order of elpd. The column d_elpd
 
-EXPLAIN LOO RESULTS
+Sodium Butyrate:
+
+model    elpd         se elpd      \delta elpd  se \delta elpd
+------   ----         -------      ------       ---
+`m1_abc` -12.85248445 17.07466012  0            0
+`m2_abc` -14.43381192 17.12352247  1.581327475  2.709846992
+`m2_ab`  -15.77080265 19.69527341  2.918318206  7.22210676
+`m1_ab`  -17.94251902 18.15290027  5.090034574  2.689721148
+    
+Puromycin
+
+model    elpd          se elpd      \delta elpd  se \delta elpd
+------   ----          --           ------       ---
+`m1_abc` -17.90297837  22.82799928  0            0
+`m2_ab`  -19.66830572  23.43633536  1.765327355  5.316614552
+`m1_ab`  -21.98055947  23.43963962  4.0775811    6.755786439
+`m2_abc` -30.56425074  35.08844529  12.66127237  19.49306278
+
+We noted that the simplest and easiest to interpret model design `m2_ab` was
+easily within one standard error of the best leave-one-timecourse-out elpd for
+both treatments. We therefore chose to use this simpler model knowing that
+doing so did not entail a tangible sacrifice of predictive power.
+
 
 ### Observed vs modelled timecourses
 
-Figure 1. shows observed timecourses for each design under the 15ug/mL
-puromycin treatment, alongside a sample of model-realised timecourses. The
-modelled and observed timecourses appear qualitatively similar, suggesting that
-the model is not dramatically mis-specified.
+The figures in this section show observed timecourses for each design under the
+15ug/mL puromycin treatment alongside 99% posterior predictive intervals, for
+each model and treatment.
 
-![Simulated timecourses for the 15ug/mL Puromycin treatment](results/timecourses.png)
+The modelled and observed timecourses appear qualitatively similar in all
+cases, suggesting that none of the models are dramatically mis-specified.
 
-TIMECOURSES FOR EACH MODEL AND FOR SODIUM BUTYRATE
+![Puromycin treatment, design m1_abc](results/plots/timecourses_puromycin_m1_abc.png)
+
+![Puromycin treatment, design m1_ab](results/plots/timecourses_puromycin_m1_ab.png)
+
+![Puromycin treatment, design m2_abc](results/plots/timecourses_puromycin_m2_abc.png)
+
+![Puromycin treatment, design m2_ab](results/plots/timecourses_puromycin_m2_ab.png)
+
+![Sodium Butyrate treatment, design m1_abc](results/plots/timecourses_sodium_butyrate_m1_abc.png)
+
+![Sodium Butyrate treatment, design m1_ab](results/plots/timecourses_sodium_butyrate_m1_ab.png)
+
+![Sodium Butyrate treatment, design m2_abc](results/plots/timecourses_sodium_butyrate_m2_abc.png)
+
+![Sodium Butyrate treatment, design m2_ab](results/plots/timecourses_sodium_butyrate_m2_ab.png)
 
 
 ### Posterior distributions of design parameters
 
-Figure 2. plots the 2.5% to 97.5% marginal posterior intervals for the
-design-level parameters, relative to the control experiment. According to our
-model, some designs are probably different from the control with respect to the
-$\tau$ and $k_d$ parameters. On the other hand, all of the posterior intervals
-for design-specific effects on the parameter $k_q$ include zero, showing that
-the designs cannot conclusively be distinguished using the data provided.
+The figures below plot the 2.5% to 97.5% marginal posterior intervals for the
+log-scale design-level effects, relative to the control experiment. 
 
-![Posterior intervals for design level parameter](results/design_param_qs.png)
+Some models are able to detect clear design effects with respect to the $\tau$
+and $k_d$ parameters. For example, for model `m2_ab` the posterior for the
+effect of design B on the delay parameter \tau_d concentrates above zero for
+both treatments.
 
-DESIGN LEVEL PARAMS IN EACH MODEL AND FOR SODIUM BUTYRATE
+On the other hand, all of the posterior intervals for design-specific effects
+on the parameter $k_q$ include zero, showing that none of the models can detect
+any impact from the designs on the speed of transition to growth arrest.
+
+
+![Posterior intervals for design level parameters, treatment 15ug/mL Puromycin, design m1_abc](./results/plots/design_param_qs_puromycin_m1_abc.png)
+
+![Posterior intervals for design level parameters, treatment 15ug/mL Puromycin, design m1_ab](results/plots/design_param_qs_puromycin_m1_ab.png)
+
+![Posterior intervals for design level parameters, treatment 15ug/mL Puromycin, design m2_abc](results/plots/design_param_qs_puromycin_m2_abc.png)
+
+![Posterior intervals for design level parameters, treatment 15ug/mL Puromycin, design m2_ab](results/plots/design_param_qs_puromycin_m2_ab.png)
+
+![Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m1_abc](results/plots/design_param_qs_sodium_butyrate_m1_abc.png)
+
+![Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m1_ab](results/plots/design_param_qs_sodium_butyrate_m1_ab.png)
+
+![Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m2_abc](results/plots/design_param_qs_sodium_butyrate_m2_abc.png)
+
+![Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m2_ab](results/plots/design_param_qs_sodium_butyrate_m2_ab.png)
+
+# References
