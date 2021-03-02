@@ -309,4 +309,7 @@ any impact from the designs on the speed of transition to growth arrest.
 
 ![Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m2_ab](results/plots/design_param_qs_sodium_butyrate_m2_ab.png)
 
+
+
+
 # References
