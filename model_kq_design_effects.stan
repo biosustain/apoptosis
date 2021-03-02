@@ -62,12 +62,9 @@ transformed parameters {
 model {
   // direct priors
   mu_err ~ normal(prior_err[1], prior_err[2]);
-  b_err ~ normal(0, 1);
+  b_err ~ normal(0, 0.1);
   R0 ~ lognormal(prior_R0[1], prior_R0[2]);
   mu ~ lognormal(prior_mu[1], prior_mu[2]);
-  // qconst ~ normal(prior_kq[1], prior_kq[2]);
-  // tconst ~ normal(prior_td[1], prior_td[2]);
-  // dconst ~ normal(prior_kd[1], prior_kd[2]);
   log_kq ~ normal(prior_kq[1], prior_kq[2]);
   log_td ~ normal(prior_td[1], prior_td[2]);
   log_kd ~ normal(prior_kd[1], prior_kd[2]);
