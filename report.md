@@ -224,25 +224,27 @@ predictive density, or elpd, using the semi-approximate leave-one-timecourse-out
 process described above.
 
 The tables below show the results of this analysis. The models are listed in
-order of elpd. The column d_elpd
+order of elpd. The column $\Delta$ elpd shows the estimated difference each
+model's elpd and that of the best model. The column se $\Delta$ elpd shows the
+estimated standard error of this difference.
 
 Sodium Butyrate:
 
-model    elpd         se elpd      \delta elpd  se \delta elpd
-------   ----         -------      ------       ---
-`m1_abc` -12.85248445 17.07466012  0            0
-`m2_abc` -14.43381192 17.12352247  1.581327475  2.709846992
-`m2_ab`  -15.77080265 19.69527341  2.918318206  7.22210676
-`m1_ab`  -17.94251902 18.15290027  5.090034574  2.689721148
+model    elpd         se elpd      $\Delta$ elpd  se $\Delta$ elpd
+------   ----         -------      ------         ---
+`m1_abc` -12.85248445 17.07466012  0              0
+`m2_abc` -14.43381192 17.12352247  1.581327475    2.709846992
+`m2_ab`  -15.77080265 19.69527341  2.918318206    7.22210676
+`m1_ab`  -17.94251902 18.15290027  5.090034574    2.689721148
     
 Puromycin
 
-model    elpd          se elpd      \delta elpd  se \delta elpd
-------   ----          --           ------       ---
-`m1_abc` -17.90297837  22.82799928  0            0
-`m2_ab`  -19.66830572  23.43633536  1.765327355  5.316614552
-`m1_ab`  -21.98055947  23.43963962  4.0775811    6.755786439
-`m2_abc` -30.56425074  35.08844529  12.66127237  19.49306278
+model    elpd          se elpd      $\Delta$ elpd  se $\Delta$ elpd
+------   ----          --           ------         ---
+`m1_abc` -17.90297837  22.82799928  0              0
+`m2_ab`  -19.66830572  23.43633536  1.765327355    5.316614552
+`m1_ab`  -21.98055947  23.43963962  4.0775811      6.755786439
+`m2_abc` -30.56425074  35.08844529  12.66127237    19.49306278
 
 We noted that the simplest and easiest to interpret model design `m2_ab` was
 easily within one standard error of the best leave-one-timecourse-out elpd for
