@@ -21,9 +21,9 @@ We assume that in this scenario the cells exist in four states:
   and $R(t)$ is the current density of replicative cells
 - $Q_a$ growth arrest, transferring from normal at a rate of $k_q R(t)$
 - $Q_c$ death committed, transferring from growth arrest at a rate of $k_q
-  R(t-\tau)$, where $tau > 0$ represents the delay between growth arrest
+  R(t-\tau)$, where $\tau > 0$ represents the delay between growth arrest
   and death commitment.
-- dead, transferring from death committed at a rate of $k_d Q_c(t)$, where
+- Dead, transferring from death committed at a rate of $k_d Q_c(t)$, where
   $Q_c(t)$ is the density of death-committed cells at time $t$.
 
 These assumptions define a system of ordinary differential equations
@@ -36,10 +36,11 @@ of replicative cells $R0$.
 We have measurements of the total cell volume, i.e. $R(t) + Q_a(t) + Q_c(t)$ at
 several time points, for cell cultures with the following structure:
 
-- 9 genetic designs, comprising 7 genetic interventions and two control
-  designs.
-- Between 1 and 4 clones implementing each design
+- 8 genetic designs, comprising 7 genetic interventions and a control design.
+- Between 3 and 4 clones implementing each design.
 - Two technical replicates for each clone.
+- For each technical replicate, measurements of total cell volume at 24 hour
+  intervals for between 3 and 5 days.
 
 Replicates of the same clone are biologically identical, though we expect some
 variation in measurements due to the experimental conditions. Clones with the
@@ -66,14 +67,14 @@ where
 - $\sigma$ is an unknown log-scale error standard deviation.
 - $t$ is a vector of known measurement times (one per measurement).
 - $\hat{y}$ is a function mapping parameter configurations to densities, under
-  the delay differential equation assumptions laid out above.
+  the delay differential equation assumptions set out above.
 
 We believe that the measurement error will be proportional to the true viable
 cell density for most measurements, motivating the use of the lognormal
 generalised linear model. However, we hypothesise that for cell densities below
-0.3 this will not be the case, as for these measurements the error is dominated
-by factors that do not depend on the true cell density, such as impurities in
-the apparatus.
+0.3 [UNITS?] this will not be the case, as for these measurements the error is
+dominated by factors that do not depend on the true cell density, such as
+impurities in the apparatus or distortion due to fragmentation of dead cells.
 
 To allow the model to incorporate this postulated effect we use the following
 distributional model:
@@ -83,8 +84,9 @@ $$
 $$
 
 In this equation the parameter $b_\sigma$ represents the degree to which the
-log-scale measurement error increases or decreases as the true value gets
-lower than 0.3.
+log-scale measurement error increases or decreases as the true value gets lower
+than 0.3. Figure 1 below shows the effect of various values of $b_\sigma$ on
+the ln-scale error standard deviation.
 
 ![True density vs ln scale measurement standard deviation for a range of $b_\sigma$ values](./results/plots/y_vs_log_sd.png)
 
@@ -105,9 +107,9 @@ Code to generate figure 1:
     plt.savefig("results/plots/y_vs_log_sd.png", bbox_inches="tight")
 ```
 
-### Design level parameters
+### Parameters
 
-The clone-level vectors $\tau_r$ and $k_{d}$ are treated as determined by other
+The clone-level vectors $\tau$ and $k_{d}$ are treated as determined by other
 parameters as follows:
 
 \begin{align*}
@@ -123,13 +125,6 @@ In these equations
 - $d_\tau$ and $d_d$ are vectors of unknown intervention effects
 - $c_\tau$ and $c_d$ are vectors of unknown clone effects, representing random
   clonal variation.
-  
-The priors for the parameters $d_\tau$ and $d_d$ were as follows:
-
-\begin{align*}
-    d_\tau &\sim N(0, 0.3) \\
-    d_d &\sim N(0, 0.3)
-\end{align*}
   
 To investigate whether the genetic interventions measurably affected the rate
 at which cells transition from the normal state $R$ to the growth arrest state
@@ -148,15 +143,30 @@ $$
     \ln k_q = qconst + c_q
 $$
 
-### Clonal variation parameters
+To represent our scientific knowledge we used informative log-normal prior
+distributions for $\tau$, $k_d$ and $k_q$ based on quantiles.
 
-The clone-level parameters $c_\tau$, $c_q$ and $c_d$ have joint multivariate
-normal prior distribution:
+parameter 1% quantile 99% quantile
+--------- ----------- ------------
+$\tau$    0.2         5
+$k_q$     1           5
+$k_d$     0.3         4
+
+The priors for the design effect parameters $d_\tau$ and $d_d$ were as follows:
 
 \begin{align*}
-[c_\tau, c_q, c_d] &\sim multi\, normal(\mathbf{0}, \mathbf{\sigma_c} \cdot\Omega) \\
+    d_\tau &\sim N(0, 0.3) \\
+    d_d &\sim N(0, 0.3)
+\end{align*}
+  
+
+The clonal variation parameters $c_\tau$, $c_q$ and $c_d$ have joint
+multivariate normal prior distribution:
+
+\begin{align*}
+[c_\tau, c_q, c_d] &\sim multi\, normal(\mathbf{0}, \bar{\sigma}_c \cdot\Omega) \\
 \Omega &\sim lkj(2) \\
-\mathbf{\sigma_c} \&sim log\, normal(-2.1, 0.35)
+\bar{\sigma}_c &\sim log\, normal(-1.61, 0.298)
 \end{align*}
 
 We used a multivariate normal distribution because we wanted to allow the
@@ -164,32 +174,23 @@ possibility of correlations between clonal variation parameters: for example,
 if a certain clone has a very high death rate, this might predict a higher or
 lower rate of death-commitment.
 
-The prior for $\sigma_c$ is informative, and was chosen based on scientific
-knowledge so as to place 99% prior mass between 0.05 and 0.25.
+The prior for $\bar{\sigma}_c$ is informative, and was chosen based on scientific
+knowledge so as to place 99% prior mass between 0.1 and 0.4.
 
 In this equation $lkj$ represents the Lewandowski, Kurowicka, and Joe
 distribution with shape parameter 2. See
 [@lewandowskiGeneratingRandomCorrelation2009] for discussion of why this is an
 appropriate default prior for correlation matrices.
 
-
-
-### Informative priors for non-design parameters
-
-Other unkowns have informative prior distributions based on scientific
+Other parameters have informative prior distributions based on scientific
 knowledge:
 
-\begin{align*}
-\mu &\sim log\, normal() \\
-R0 &\sim log\, normal() \\
-qconst &\sim normal() \\
-\tau const &\sim normal() \\
-dconst &\sim normal() \\
-d_\tau &\sim normal() \\
-d_d &\sim normal() \\
-\end{align*}
-
-
+parameter   distribution 1% prior quantile 99% prior quantile
+---------   ------------ ----------------- ------------------
+$\mu$       log normal   0.65              0.73
+$R0$        log normal   2                 3
+$a_\sigma$  log normal   0.05              0.13
+$b_\sigma$  normal       -0.3              0.3
 
 ### Data representation
 
