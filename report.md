@@ -86,22 +86,23 @@ In this equation the parameter $b_\sigma$ represents the degree to which the
 log-scale measurement error increases or decreases as the true value gets
 lower than 0.3.
 
-![True density vs ln scale measurement standard deviation for a range of $b_\sigma$ values](./results/y_vs_log_sd.png)
+![True density vs ln scale measurement standard deviation for a range of $b_\sigma$ values](./results/plots/y_vs_log_sd.png)
 
 Code to generate figure 1:
 ``` python
     import numpy as np
     from matplotlib import pyplot as plt
 
+    plt.style.use("sparse.mplstyle")
     y = np.linspace(0.04, 0.4, 20)
     bs = [-0, -0.05, -0.1, -0.15, -0.2]
     diff = np.array([np.log(yi/0.3) if yi < 0.3 else 0 for yi in y])
     for b in bs:
         plt.plot(y, 0.2 + b * diff, label=str(b))
-    plt.legend(title="$b_\sigma$")
+    plt.legend(title="$b_\sigma$", frameon=False)
     plt.xlabel("True density")
     plt.xlabel("ln scale standard deviation")
-    plt.savefig("results/y_vs_log_sd.png")
+    plt.savefig("results/plots/y_vs_log_sd.png", bbox_inches="tight")
 ```
 
 ### Design level parameters
