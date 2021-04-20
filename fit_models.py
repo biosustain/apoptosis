@@ -10,8 +10,8 @@ from util import get_99_pct_params_ln
 PRIORS = {
     "prior_mu": get_99_pct_params_ln(0.65, 0.73),
     "prior_kq": get_99_pct_params_ln(1, 5),
-    "prior_td": get_99_pct_params_ln(0.2, 5),
-    "prior_kd": get_99_pct_params_ln(0.3, 4),
+    "prior_td": get_99_pct_params_ln(0.4, 7.5),
+    "prior_kd": get_99_pct_params_ln(0.05, 2.5),
     "prior_R0": get_99_pct_params_ln(2, 3),
     "prior_err": get_99_pct_params_ln(0.05, 0.13)
 }
@@ -21,7 +21,7 @@ SAMPLE_CONFIG = dict(
     inits=0,
     iter_warmup=600,
     iter_sampling=600,
-    chains=2,
+    chains=4,
     seed=12345
 )
 CSV_FILE = os.path.join("raw_data", "AllFlaskData_compiled.csv")
@@ -30,6 +30,7 @@ OUTPUT_DIR = "results"
 LOO_DIR = os.path.join(OUTPUT_DIR, "loo")
 INFD_DIR = os.path.join(OUTPUT_DIR, "infd")
 LIKELIHOOD = True
+
 TREATMENTS = {
     "puromycin": "15ug/mL Puromycin",
     "sodium_butyrate": "20mM Sodium Butyrate",
@@ -38,6 +39,16 @@ X_COLS = {
     "ab": ["is_A", "is_B", "is_AB"],
     "abc": ["is_A", "is_B", "is_AB", "is_C", "is_AC", "is_BC", "is_ABC"]
 }
+'''
+TREATMENTS = {
+    "tunicamycin": "7.5uM Tunicamycin",
+    "brefeldinA": "7.5um Brefeldin A",
+}
+X_COLS = {
+    "ab": ["is_AB"],
+    "abc": ["is_AB", "is_C", "is_ABC"]
+}
+'''
 STAN_FILES = {
     "m1":  "model_kq_design_effects.stan",
     "m2":  "model_no_kq_design_effects.stan",

@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 import pandas as pd
 
 from munging import prepare_data
-from fit_models import TREATMENTS, STAN_FILES, X_COLS, INFD_DIR, CSV_FILE
+from fit_models import TREATMENTS, STAN_FILES, X_COLS, INFD_DIR, CSV_FILE, LOO_DIR
 
 MPL_STYLE = "sparse.mplstyle"
 PLOT_DIR = os.path.join("results", "plots")
@@ -36,6 +36,7 @@ def plot_design_qs(infd):
         ax = axes[param_order[p]]
         y = np.linspace(0, 1, n_design)
         dqs = df.set_index(["design", "quantile"])["value"].unstack().loc[design_order]
+        if isinstance(dqs, pd.Series): dqs = pd.DataFrame(dqs).transpose()
         ax.set_title(p)
         lines = ax.hlines(y, dqs[0.025], dqs[0.975], color="black")
         ax.set_yticks(y)
@@ -48,7 +49,7 @@ def plot_design_qs(infd):
     return f, axes
             
 
-def plot_timecourses(msmts, infd):
+def plot_timecourses(msmts, infd, run_name):
     y_timecourses = (
         msmts.set_index(["design", "clone", "replicate", "day"])["y"].unstack()
     )
@@ -99,7 +100,7 @@ def plot_timecourses(msmts, infd):
         [yline[0], fill], ["observation", "99% Posterior predictive interval"],
         frameon=False, loc="upper left", ncol=2
     )
-    f.suptitle("Modelled vs observed timecourses")
+    f.suptitle(f"Modelled vs observed timecourses: {run_name}")
     return f, axes
 
 
@@ -111,18 +112,41 @@ def main():
                 run_name = f"{treatment_label}_{model_name}_{xname}"
                 print(f"Drawing plots for model {run_name}")
                 msmts = prepare_data(pd.read_csv(CSV_FILE), treatment=treatment)
+                comparison = (
+                    pd.read_csv(os.path.join(LOO_DIR, f"reloo_comparison_{treatment_label}.csv"))
+                    .rename(columns={"Unnamed: 0": "index"}).set_index("index")
+                )
                 infd_file = os.path.join(INFD_DIR, f"infd_{run_name}.ncdf")
                 infd = az.from_netcdf(infd_file)
+                ## Effects
                 f, axes = plot_design_qs(infd)
                 f.savefig(
                     os.path.join(PLOT_DIR, f"design_param_qs_{run_name}.png"),
                     bbox_inches="tight"
                 )
-                f, axes = plot_timecourses(msmts, infd)
+                ## Measurement and simulated timecourse profiles
+                f, axes = plot_timecourses(msmts, infd, run_name)
                 f.savefig(
-                    os.path.join(PLOT_DIR, f"timecourses_{run_name}.png"),
+                    os.path.join(PLOT_DIR, f"timecourses_{run_name}.svg"),
                     bbox_inches="tight"
                 )
+                ## LOO (reloo) scores
+                az.plot_compare(comparison, insample_dev=False, plot_ic_diff=False)
+                plt.xlabel("LOO Score")
+                plt.title(f"{treatment_label}")
+                plt.savefig(
+                    os.path.join(PLOT_DIR, f"model_RELOO_comparison_{treatment_label}.svg"),
+                    bbox_inches="tight"
+                )
+                
+                ## KDE and trace of sampled values
+                params = [p for p in ["dt", "dd", "dq"] if p in infd.posterior]
+                az.plot_trace(infd, var_names=params, legend=True)
+                plt.savefig(
+                    os.path.join(PLOT_DIR, f"sampled_params_{run_name}.svg"),
+                    bbox_inches="tight"
+                )
+                plt.show()
                 plt.close("all")
 
 
