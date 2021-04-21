@@ -65,38 +65,40 @@ class CustomSamplingWrapper(az.SamplingWrapper):
         return d_test, {}
 
 def main():
-    for treatment_label, treatment in TREATMENTS.items():
-        loos = {}
-        for model_name, stan_file in STAN_FILES.items():
-            for xname, x_cols in X_COLS.items():
-                run_name = f"{treatment_label}_{model_name}_{xname}"
-                loo_file = os.path.join(LOO_DIR, f"loo_{run_name}.pkl")
-                infd_file = os.path.join(INFD_DIR, f"infd_{run_name}.ncdf")
-                print(f"Running reloo analysis for model {run_name}...")
-                model = CmdStanModel(stan_file=stan_file)
-                msmts = prepare_data(pd.read_csv(CSV_FILE), treatment=treatment)
-                loo_orig = pd.read_pickle(loo_file)
-                infd_orig = pd.read_pickle(loo_file)
-                infd_kwargs = get_infd_kwargs(msmts, x_cols)
-                msmts_raw = pd.read_csv(CSV_FILE)
-                sw = CustomSamplingWrapper(
-                    model=model,
-                    idata_orig=infd_orig,
-                    sample_kwargs=SAMPLE_CONFIG,
-                    idata_kwargs=infd_kwargs,
-                    msmts=msmts,
-                    priors=PRIORS,
-                    x_cols=x_cols
-                )
-                rl = az.reloo(sw, loo_orig=loo_orig, k_thresh=K_THRESHOLD)
-                rl.to_pickle(os.path.join(LOO_DIR, f"reloo_{run_name}.pkl"))
-                loos[run_name] = rl
-        comparison = compare(loos)
-        print(f"Loo comparison for model {run_name}:")
-        print(comparison)
-        comparison.to_csv(
-            os.path.join(LOO_DIR, f"reloo_comparison_{treatment_label}.csv")
-        )
+    for treatment_set, pairs in TREATMENT_SETS.items():
+        TREATMENTS, X_COLS = pairs
+        for treatment_label, treatment in TREATMENTS.items():
+            loos = {}
+            for model_name, stan_file in STAN_FILES.items():
+                for xname, x_cols in X_COLS.items():
+                    run_name = f"{treatment_label}_{model_name}_{xname}"
+                    loo_file = os.path.join(LOO_DIR, f"loo_{run_name}.pkl")
+                    infd_file = os.path.join(INFD_DIR, f"infd_{run_name}.ncdf")
+                    print(f"Running reloo analysis for model {run_name}...")
+                    model = CmdStanModel(stan_file=stan_file)
+                    msmts = prepare_data(pd.read_csv(CSV_FILE), treatment=treatment)
+                    loo_orig = pd.read_pickle(loo_file)
+                    infd_orig = pd.read_pickle(loo_file)
+                    infd_kwargs = get_infd_kwargs(msmts, x_cols)
+                    msmts_raw = pd.read_csv(CSV_FILE)
+                    sw = CustomSamplingWrapper(
+                        model=model,
+                        idata_orig=infd_orig,
+                        sample_kwargs=SAMPLE_CONFIG,
+                        idata_kwargs=infd_kwargs,
+                        msmts=msmts,
+                        priors=PRIORS,
+                        x_cols=x_cols
+                    )
+                    rl = az.reloo(sw, loo_orig=loo_orig, k_thresh=K_THRESHOLD)
+                    rl.to_pickle(os.path.join(LOO_DIR, f"reloo_{run_name}.pkl"))
+                    loos[run_name] = rl
+            comparison = compare(loos)
+            print(f"Loo comparison for model {run_name}:")
+            print(comparison)
+            comparison.to_csv(
+                os.path.join(LOO_DIR, f"reloo_comparison_{treatment_label}.csv")
+            )
 
 
 if __name__ == "__main__":

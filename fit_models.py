@@ -31,29 +31,31 @@ LOO_DIR = os.path.join(OUTPUT_DIR, "loo")
 INFD_DIR = os.path.join(OUTPUT_DIR, "infd")
 LIKELIHOOD = True
 
-TREATMENTS = {
+
+TREATMENT_SET_1 = {
     "puromycin": "15ug/mL Puromycin",
     "sodium_butyrate": "20mM Sodium Butyrate",
 }
-X_COLS = {
-    "ab": ["is_A", "is_B", "is_AB"],
-    "abc": ["is_A", "is_B", "is_AB", "is_C", "is_AC", "is_BC", "is_ABC"]
-}
-'''
-TREATMENTS = {
+TREATMENT_SET_2 = {
     "tunicamycin": "7.5uM Tunicamycin",
     "brefeldinA": "7.5um Brefeldin A",
 }
-X_COLS = {
+X_COL_1 = {
+    "ab": ["is_A", "is_B", "is_AB"],
+    "abc": ["is_A", "is_B", "is_AB", "is_C", "is_AC", "is_BC", "is_ABC"]
+}
+X_COL_2 = {
     "ab": ["is_AB"],
     "abc": ["is_AB", "is_C", "is_ABC"]
 }
-'''
 STAN_FILES = {
     "m1":  "model_kq_design_effects.stan",
     "m2":  "model_no_kq_design_effects.stan",
 }
-
+TREATMENT_SETS = {
+    'Treatment_1' : (TREATMENT_SET_1, X_COL_1),
+    'Treatment_2' : (TREATMENT_SET_2, X_COL_2)
+}
 
 def get_stan_input(msmts, priors, x_clone_cols):
     x_clone = msmts.groupby("clone_fct")[x_clone_cols].first().astype(int)
@@ -101,41 +103,42 @@ def get_infd_kwargs(msmts, x_cols):
         save_warmup=SAMPLE_CONFIG["save_warmup"]
     )
 
-
 def main():
     logger = get_logger()
     logger.setLevel(40)  # only log messages with at-least-error severity
-    for treatment_label, treatment in TREATMENTS.items():
-        infds = {}
-        for model_name, stan_file in STAN_FILES.items():
-            for xname, x_cols in X_COLS.items():
-                run_name = f"{treatment_label}_{model_name}_{xname}"
-                loo_file = os.path.join(LOO_DIR, f"loo_{run_name}.pkl")
-                infd_file = os.path.join(INFD_DIR, f"infd_{run_name}.ncdf")
-                json_file = os.path.join(
-                    OUTPUT_DIR, f"input_data_{run_name}.json"
-                )
-                print(f"Fitting model {run_name}...")
-                model = CmdStanModel(stan_file=stan_file, logger=logger)
-                msmts = prepare_data(pd.read_csv(CSV_FILE), treatment=treatment)
-                stan_input = get_stan_input(msmts, PRIORS, x_cols)
-                jsondump(json_file, stan_input)
-                mcmc = model.sample(data=stan_input, **SAMPLE_CONFIG)
-                print(mcmc.diagnose().replace("\n\n", "\n"))
-                infd_kwargs = get_infd_kwargs(msmts, x_cols)
-                infd = az.from_cmdstanpy(mcmc, **infd_kwargs)
-                infds[run_name] = infd
-                loo = az.loo(infd, pointwise=True)
-                print(f"Writing inference data to {infd_file}")
-                infd.to_netcdf(infd_file)
-                print(f"Writing psis-loo results to {loo_file}\n")
-                loo.to_pickle(loo_file)
-        comparison = az.compare(infds)
-        print(f"Loo comparison for treatment {treatment}:")
-        print(comparison)
-        comparison.to_csv(
-            os.path.join(LOO_DIR, f"loo_comparison_{treatment_label}.csv")
-        )
+    for treatment_set, pairs in TREATMENT_SETS.items():
+        TREATMENTS, X_COLS = pairs
+        for treatment_label, treatment in TREATMENTS.items():
+            infds = {}
+            for model_name, stan_file in STAN_FILES.items():
+                for xname, x_cols in X_COLS.items():
+                    run_name = f"{treatment_label}_{model_name}_{xname}"
+                    loo_file = os.path.join(LOO_DIR, f"loo_{run_name}.pkl")
+                    infd_file = os.path.join(INFD_DIR, f"infd_{run_name}.ncdf")
+                    json_file = os.path.join(
+                        OUTPUT_DIR, f"input_data_{run_name}.json"
+                    )
+                    print(f"Fitting model {run_name}...")
+                    model = CmdStanModel(stan_file=stan_file, logger=logger)
+                    msmts = prepare_data(pd.read_csv(CSV_FILE), treatment=treatment)
+                    stan_input = get_stan_input(msmts, PRIORS, x_cols)
+                    jsondump(json_file, stan_input)
+                    mcmc = model.sample(data=stan_input, **SAMPLE_CONFIG)
+                    print(mcmc.diagnose().replace("\n\n", "\n"))
+                    infd_kwargs = get_infd_kwargs(msmts, x_cols)
+                    infd = az.from_cmdstanpy(mcmc, **infd_kwargs)
+                    infds[run_name] = infd
+                    loo = az.loo(infd, pointwise=True)
+                    print(f"Writing inference data to {infd_file}")
+                    infd.to_netcdf(infd_file)
+                    print(f"Writing psis-loo results to {loo_file}\n")
+                    loo.to_pickle(loo_file)
+            comparison = az.compare(infds)
+            print(f"Loo comparison for treatment {treatment}:")
+            print(comparison)
+            comparison.to_csv(
+                os.path.join(LOO_DIR, f"loo_comparison_{treatment_label}.csv")
+            )
             
 
 if __name__ == "__main__":

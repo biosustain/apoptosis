@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 import pandas as pd
 
 from munging import prepare_data
-from fit_models import TREATMENTS, STAN_FILES, X_COLS, INFD_DIR, CSV_FILE, LOO_DIR
+from fit_models import TREATMENT_SETS, STAN_FILES, INFD_DIR, CSV_FILE, LOO_DIR
 
 MPL_STYLE = "sparse.mplstyle"
 PLOT_DIR = os.path.join("results", "plots")
@@ -106,48 +106,48 @@ def plot_timecourses(msmts, infd, run_name):
 
 def main():
     plt.style.use(MPL_STYLE)
-    for treatment_label, treatment in TREATMENTS.items():
-        for model_name, stan_file in STAN_FILES.items():
-            for xname, x_cols in X_COLS.items():
-                run_name = f"{treatment_label}_{model_name}_{xname}"
-                print(f"Drawing plots for model {run_name}")
-                msmts = prepare_data(pd.read_csv(CSV_FILE), treatment=treatment)
-                comparison = (
-                    pd.read_csv(os.path.join(LOO_DIR, f"reloo_comparison_{treatment_label}.csv"))
-                    .rename(columns={"Unnamed: 0": "index"}).set_index("index")
-                )
-                infd_file = os.path.join(INFD_DIR, f"infd_{run_name}.ncdf")
-                infd = az.from_netcdf(infd_file)
-                ## Effects
-                f, axes = plot_design_qs(infd)
-                f.savefig(
-                    os.path.join(PLOT_DIR, f"design_param_qs_{run_name}.png"),
-                    bbox_inches="tight"
-                )
-                ## Measurement and simulated timecourse profiles
-                f, axes = plot_timecourses(msmts, infd, run_name)
-                f.savefig(
-                    os.path.join(PLOT_DIR, f"timecourses_{run_name}.svg"),
-                    bbox_inches="tight"
-                )
-                ## LOO (reloo) scores
-                az.plot_compare(comparison, insample_dev=False, plot_ic_diff=False)
-                plt.xlabel("LOO Score")
-                plt.title(f"{treatment_label}")
-                plt.savefig(
-                    os.path.join(PLOT_DIR, f"model_RELOO_comparison_{treatment_label}.svg"),
-                    bbox_inches="tight"
-                )
-                
-                ## KDE and trace of sampled values
-                params = [p for p in ["dt", "dd", "dq"] if p in infd.posterior]
-                az.plot_trace(infd, var_names=params, legend=True)
-                plt.savefig(
-                    os.path.join(PLOT_DIR, f"sampled_params_{run_name}.svg"),
-                    bbox_inches="tight"
-                )
-                plt.show()
-                plt.close("all")
+    for treatment_set, pairs in TREATMENT_SETS.items():
+        TREATMENTS, X_COLS = pairs
+        for treatment_label, treatment in TREATMENTS.items():
+            for model_name, stan_file in STAN_FILES.items():
+                for xname, x_cols in X_COLS.items():
+                    run_name = f"{treatment_label}_{model_name}_{xname}"
+                    print(f"Drawing plots for model {run_name}")
+                    msmts = prepare_data(pd.read_csv(CSV_FILE), treatment=treatment)
+                    comparison = (
+                        pd.read_csv(os.path.join(LOO_DIR, f"reloo_comparison_{treatment_label}.csv"))
+                        .rename(columns={"Unnamed: 0": "index"}).set_index("index")
+                    )
+                    infd_file = os.path.join(INFD_DIR, f"infd_{run_name}.ncdf")
+                    infd = az.from_netcdf(infd_file)
+                    ## Effects
+                    f, axes = plot_design_qs(infd)
+                    f.savefig(
+                        os.path.join(PLOT_DIR, f"design_param_qs_{run_name}.png"),
+                        bbox_inches="tight"
+                    )
+                    ## Measurement and simulated timecourse profiles
+                    f, axes = plot_timecourses(msmts, infd, run_name)
+                    f.savefig(
+                        os.path.join(PLOT_DIR, f"timecourses_{run_name}.png"),
+                        bbox_inches="tight"
+                    )
+                    ## LOO (reloo) scores
+                    az.plot_compare(comparison, insample_dev=False, plot_ic_diff=False)
+                    plt.xlabel("LOO Score")
+                    plt.title(f"{treatment_label}")
+                    plt.savefig(
+                        os.path.join(PLOT_DIR, f"model_RELOO_comparison_{treatment_label}.png"),
+                        bbox_inches="tight"
+                    )
+                    ## KDE and trace of sampled values
+                    params = [p for p in ["dt", "dd", "dq"] if p in infd.posterior]
+                    az.plot_trace(infd, var_names=params, legend=True)
+                    plt.savefig(
+                        os.path.join(PLOT_DIR, f"sampled_params_{run_name}.png"),
+                        bbox_inches="tight"
+                    )
+                    plt.close("all")
 
 
 if __name__ == "__main__":
