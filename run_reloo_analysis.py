@@ -1,20 +1,13 @@
-from loo_compare import compare
-from cmdstanpy import CmdStanModel
-import arviz as az
-from munging import prepare_data
-import pandas as pd
-from fit_models import (
-    get_stan_input,
-    get_infd_kwargs,
-    PRIORS,
-    CSV_FILE,
-    TREATMENTS,
-    X_COLS,
-    STAN_FILES,
-    LOO_DIR,
-    INFD_DIR
-)
 import os
+
+import arviz as az
+import pandas as pd
+from cmdstanpy import CmdStanModel
+
+from fit_models import (CSV_FILE, INFD_DIR, LOO_DIR, PRIORS, STAN_FILES,
+                        TREATMENT_SETS, get_infd_kwargs, get_stan_input)
+from loo_compare import compare
+from munging import prepare_data
 
 SAMPLE_CONFIG = dict(
     show_progress=False,
@@ -23,7 +16,7 @@ SAMPLE_CONFIG = dict(
     iter_warmup=300,
     iter_sampling=300,
     chains=1,
-    seed=12345
+    seed=12345,
 )
 K_THRESHOLD = 0.7
 
@@ -64,6 +57,7 @@ class CustomSamplingWrapper(az.SamplingWrapper):
         d_test["N_test"] = len(m_test)
         return d_test, {}
 
+
 def main():
     for treatment_set, pairs in TREATMENT_SETS.items():
         TREATMENTS, X_COLS = pairs
@@ -73,14 +67,12 @@ def main():
                 for xname, x_cols in X_COLS.items():
                     run_name = f"{treatment_label}_{model_name}_{xname}"
                     loo_file = os.path.join(LOO_DIR, f"loo_{run_name}.pkl")
-                    infd_file = os.path.join(INFD_DIR, f"infd_{run_name}.ncdf")
                     print(f"Running reloo analysis for model {run_name}...")
                     model = CmdStanModel(stan_file=stan_file)
                     msmts = prepare_data(pd.read_csv(CSV_FILE), treatment=treatment)
                     loo_orig = pd.read_pickle(loo_file)
                     infd_orig = pd.read_pickle(loo_file)
                     infd_kwargs = get_infd_kwargs(msmts, x_cols)
-                    msmts_raw = pd.read_csv(CSV_FILE)
                     sw = CustomSamplingWrapper(
                         model=model,
                         idata_orig=infd_orig,
@@ -88,13 +80,13 @@ def main():
                         idata_kwargs=infd_kwargs,
                         msmts=msmts,
                         priors=PRIORS,
-                        x_cols=x_cols
+                        x_cols=x_cols,
                     )
                     rl = az.reloo(sw, loo_orig=loo_orig, k_thresh=K_THRESHOLD)
                     rl.to_pickle(os.path.join(LOO_DIR, f"reloo_{run_name}.pkl"))
                     loos[run_name] = rl
             comparison = compare(loos)
-            print(f"Loo comparison for model {run_name}:")
+            print(f"Loo comparison for model {treatment_label}:")
             print(comparison)
             comparison.to_csv(
                 os.path.join(LOO_DIR, f"reloo_comparison_{treatment_label}.csv")
