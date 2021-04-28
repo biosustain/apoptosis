@@ -9,6 +9,9 @@ STAN_FILES =                      \
   model_kq_design_effects.hpp     \
   model_kq_no_design_effects      \
   model_kq_no_design_effects.hpp
+LOO_FILES_PKL = $(shell find results/loo -name "*.pkl")
+LOO_FILES_CSV = $(shell find results/loo -name "*.csv")
+STAN_INPUT_FILES = $(shell find results -name "*.json")
 MARKDOWN_FILE = report.md
 PDF_FILE = report.pdf
 PANDOCFLAGS =                         \
@@ -20,13 +23,16 @@ PANDOCFLAGS =                         \
 $(PDF_FILE): $(MARKDOWN_FILE) $(BIBLIOGRAPHY)
 	pandoc $< -o $@ $(PANDOCFLAGS)
 
-clean_all: clean_stan clean_plots clean_pdf
+clean_all: clean_stan clean_plots clean_pdf clean_samples clean_loo
 
 clean_stan:
-	$(RM) $(SAMPLES) $(LOGS) $(STAN_FILES)
+	$(RM) $(SAMPLES) $(LOGS) $(STAN_FILES) $(STAN_INPUT_FILES)
 
 clean_plots:
 	$(RM) $(PLOTS)
 
 clean_pdf:
 	$(RM) $(PDF_FILE)
+
+clean_loo:
+	$(RM) $(LOO_FILES_PKL) $(LOO_FILES_CSV)
