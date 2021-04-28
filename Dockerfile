@@ -10,4 +10,4 @@ RUN install_cmdstan -v 2.26.1
 
 COPY . apoptosis/
 
-CMD cd apoptosis && make clean_stan && python3 fit_models.py && python3 draw_plots.py
+CMD cd apoptosis && make clean_stan && python3 fit_models.py && python3 run_reloo_analysis.py && python3 draw_plots.py
