@@ -13,20 +13,25 @@ def stan_factorize(s_in, first=None):
 
 def prepare_data(raw: pd.DataFrame, treatment: str) -> pd.DataFrame:
     return (
-        pd.DataFrame({
-            "design": raw["Plasmid"].astype("string"),
-            "clone": raw["Clone"].astype("string"),
-            "treatment": raw["Treatment"].astype("string"),
-            "replicate": raw["Clone"].str.cat(raw["Run"], sep="-").astype("string"),
-            "day": raw["Day"].astype(float),
-            "y": raw["VCD"].astype(float),
-        })
-        .loc[lambda df: (
-            df["treatment"].eq(treatment)
-            & df["day"].gt(0)
-            & ~df["design"].eq("None")
-        )]
+        pd.DataFrame(
+            {
+                "design": raw["Plasmid"].astype("string"),
+                "clone": raw["Clone"].astype("string"),
+                "treatment": raw["Treatment"].astype("string"),
+                "replicate": raw["Clone"].str.cat(raw["Run"], sep="-").astype("string"),
+                "day": raw["Day"].astype(float),
+                "y": raw["VCD"].astype(float),
+            }
+        )
+        .loc[
+            lambda df: (
+                df["treatment"].eq(treatment)
+                & df["day"].gt(0)
+                & ~df["design"].eq("None")
+            )
+        ]
         .assign(
+            baseline=1,
             design_fct=lambda df: stan_factorize(df["design"], first="Empty"),
             clone_fct=lambda df: stan_factorize(df["clone"]),
             replicate_fct=lambda df: stan_factorize(df["replicate"]),
@@ -39,4 +44,3 @@ def prepare_data(raw: pd.DataFrame, treatment: str) -> pd.DataFrame:
             is_ABC=lambda df: df["is_A"] & df["is_B"] & df["is_C"],
         )
     )
-
