@@ -15,6 +15,7 @@ PRIORS = {
     "prior_kd": get_99_pct_params_ln(0.05, 2.5),
     "prior_R0": get_99_pct_params_ln(2, 3),
     "prior_err": get_99_pct_params_ln(0.05, 0.13),
+    "prior_sd_cv": get_99_pct_params_ln(0.02, 0.2),
 }
 CSV_FILE = os.path.join("raw_data", "AllFlaskData_compiled.csv")
 LIKELIHOOD = 1
@@ -28,11 +29,11 @@ SAMPLE_CONFIG = dict(
     show_progress=False,
     save_warmup=False,
     inits=0,
-    iter_warmup=600,
-    iter_sampling=600,
+    iter_warmup=300,
+    iter_sampling=300,
     chains=4,
     seed=12345,
-    adapt_delta=0.9,
+    adapt_delta=0.99,
     output_dir=SAMPLES_DIR,
 )
 
@@ -47,15 +48,48 @@ MODEL_SETS = {
         ("m1", "ab_no_interaction"),
         ("m1", "ab"),
         ("m1", "abc"),
+        ("m2", "null"),
         ("m2", "ab_no_interaction"),
         ("m2", "ab"),
         ("m2", "abc"),
-        ("null", "ab"),
     ],
     "supplementary": [
-        ("m1", "abc2"),
-        ("m2", "abc2"),
+        ("m1", "ab"),
+        ("m2", "ab"),
+        ("m2", "null"),
     ],
+}
+EFFECT_PRIOR_SDS = {
+    "dt": {
+        "baseline": 0.3,
+        "is_A": 0.3,
+        "is_B": 0.3,
+        "is_AB": 0.1,
+        "is_C": 0.3,
+        "is_AC": 0.1,
+        "is_BC": 0.1,
+        "is_ABC": 0.05,
+    },
+    "dd": {
+        "baseline": 0.3,
+        "is_A": 0.3,
+        "is_B": 0.3,
+        "is_AB": 0.1,
+        "is_C": 0.3,
+        "is_AC": 0.1,
+        "is_BC": 0.1,
+        "is_ABC": 0.05,
+    },
+    "dq": {
+        "baseline": 0.3,
+        "is_A": 0.3,
+        "is_B": 0.3,
+        "is_AB": 0.1,
+        "is_C": 0.3,
+        "is_AC": 0.1,
+        "is_BC": 0.1,
+        "is_ABC": 0.05,
+    },
 }
 TREATMENT_TO_MODEL_SET = {
     "puromycin": "main",
@@ -64,17 +98,19 @@ TREATMENT_TO_MODEL_SET = {
     "brefeldinA": "supplementary",
 }
 X_COLS = {
-    "ab": ["is_A", "is_B", "is_AB"],
-    "ab_no_interaction": ["is_A", "is_B"],
-    "abc": ["is_A", "is_B", "is_AB", "is_C", "is_AC", "is_BC", "is_ABC"],
-    "ab2": ["is_AB"],
-    "abc2": ["is_AB", "is_C", "is_ABC"],
+    "null": ["baseline"],
+    "ab_no_interaction": ["baseline", "is_A", "is_B"],
+    "ab": ["baseline", "is_A", "is_B", "is_AB"],
+    "abc": ["baseline", "is_A", "is_B", "is_AB", "is_C", "is_AC", "is_BC", "is_ABC"],
 }
 STAN_FILES = {
-    "null": "null_model.stan",
     "m1": "model_kq_design_effects.stan",
     "m2": "model_no_kq_design_effects.stan",
 }
+
+
+def get_effect_prior_sds(x_clone_cols):
+    return
 
 
 def get_stan_input(msmts, priors, x_clone_cols):
@@ -82,6 +118,9 @@ def get_stan_input(msmts, priors, x_clone_cols):
     return {
         **priors,
         **{
+            "prior_sd_dd": [EFFECT_PRIOR_SDS["dd"][c] for c in x_clone_cols],
+            "prior_sd_dt": [EFFECT_PRIOR_SDS["dt"][c] for c in x_clone_cols],
+            "prior_sd_dq": [EFFECT_PRIOR_SDS["dq"][c] for c in x_clone_cols],
             "N": len(msmts),
             "N_test": len(msmts),
             "R": msmts["replicate"].nunique(),
@@ -102,26 +141,32 @@ def get_stan_input(msmts, priors, x_clone_cols):
     }
 
 
-def get_infd_kwargs(msmts, x_cols):
+def get_infd_kwargs(msmts, x_cols, stan_input):
+    coords = {
+        "clone": msmts.groupby("clone_fct")["clone"].first(),
+        "replicate": msmts.groupby("replicate_fct")["replicate"].first(),
+        "cv_effects": ["q", "tau", "d"],
+    }
+    dims = {
+        "R0": ["replicate"],
+        "cv": ["clone", "cv_effects"],
+        "sd_cv": ["cv_effects"],
+        "llik": ["replicate"],
+    }
+    if len(x_cols) > 1:
+        coords["design"] = x_cols
+        dims["msmts"] = ["design"]
+        dims["dd"] = ["design"]
+        dims["dt"] = ["design"]
+        dims["dq"] = ["design"]
+        dims["avg_delay"] = ["design"]
     return dict(
         log_likelihood="llik",
         posterior_predictive="yrep",
-        coords={
-            "design": x_cols,
-            "clone": msmts.groupby("clone_fct")["clone"].first(),
-            "replicate": msmts.groupby("replicate_fct")["replicate"].first(),
-            "cv_effects": ["q", "tau", "d"],
-        },
-        dims={
-            "R0": ["replicate"],
-            "msmts": ["design"],
-            "dd": ["design"],
-            "dt": ["design"],
-            "dq": ["design"],
-            "cv": ["clone", "cv_effects"],
-            "sd_cv": ["cv_effects"],
-            "llik": ["replicate"],
-        },
+        coords=coords,
+        dims=dims,
+        observed_data={"y": stan_input["y"]},
+        constant_data={"x_clone": stan_input["x_clone"]},
         save_warmup=SAMPLE_CONFIG["save_warmup"],
     )
 
@@ -145,8 +190,9 @@ def main():
             jsondump(json_file, stan_input)
             mcmc = model.sample(data=stan_input, **SAMPLE_CONFIG)
             print(mcmc.diagnose().replace("\n\n", "\n"))
-            infd_kwargs = get_infd_kwargs(msmts, x_cols)
+            infd_kwargs = get_infd_kwargs(msmts, x_cols, stan_input)
             infd = az.from_cmdstanpy(mcmc, **infd_kwargs)
+            print(az.summary(infd, var_names=["avg_delay", "dt", "dd", "sd_cv"]))
             infds[run_name] = infd
             loo = az.loo(infd, pointwise=True)
             print(f"Writing inference data to {infd_file}")

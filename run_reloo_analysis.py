@@ -1,12 +1,13 @@
+import json
 import os
 
 import arviz as az
 import pandas as pd
 from cmdstanpy import CmdStanModel
 
-from fit_models import (CSV_FILE, INFD_DIR, LOO_DIR, MODEL_SETS, PRIORS,
-                        STAN_FILES, TREATMENT_TO_MODEL_SET, TREATMENTS, X_COLS,
-                        get_infd_kwargs, get_stan_input)
+from fit_models import (CSV_FILE, INFD_DIR, LOO_DIR, MODEL_SETS, OUTPUT_DIR,
+                        PRIORS, STAN_FILES, TREATMENT_TO_MODEL_SET, TREATMENTS,
+                        X_COLS, get_infd_kwargs, get_stan_input)
 from loo_compare import compare
 from munging import prepare_data
 
@@ -68,12 +69,15 @@ def main():
             run_name = f"{treatment_label}_{model_name}_{xname}"
             loo_file = os.path.join(LOO_DIR, f"loo_{run_name}.pkl")
             infd_file = os.path.join(INFD_DIR, f"infd_{run_name}.ncdf")
+            json_file = os.path.join(OUTPUT_DIR, f"input_data_{run_name}.json")
             print(f"Running reloo analysis for model {run_name}...")
             model = CmdStanModel(stan_file=stan_file)
             msmts = prepare_data(pd.read_csv(CSV_FILE), treatment=treatment)
             loo_orig = pd.read_pickle(loo_file)
             infd_orig = az.from_netcdf(infd_file)
-            infd_kwargs = get_infd_kwargs(msmts, x_cols)
+            with open(json_file, "r") as f:
+                stan_input = json.load(f)
+            infd_kwargs = get_infd_kwargs(msmts, x_cols, stan_input)
             sw = CustomSamplingWrapper(
                 model=model,
                 idata_orig=infd_orig,
