@@ -22,6 +22,10 @@ data {
   vector[2] prior_kd;
   vector[2] prior_R0;
   vector[2] prior_err;
+  vector[2] prior_sd_cv;
+  vector[K] prior_sd_dd;
+  vector[K] prior_sd_dt;
+  vector[K] prior_sd_dq;
   int<lower=0,upper=1> likelihood;
 }
 parameters {
@@ -30,8 +34,6 @@ parameters {
   vector<lower=0>[R] R0;
   real qconst;
   real<lower=0,upper=exp(qconst)> mu;
-  real tconst;
-  real dconst;
   // design effects
   vector[K] dq;
   vector[K] dt;
@@ -39,15 +41,14 @@ parameters {
   // clone effects
   matrix[C, 3] cv_z;
   vector<lower=0>[3] sd_cv;
-  cholesky_factor_corr[3] L_cv;
 }
 transformed parameters {
   vector[N] err;
-  matrix[C, 3] cv = cv_z * diag_pre_multiply(sd_cv, L_cv);
+  matrix[C, 3] cv = cv_z .* rep_matrix(sd_cv', C);
   vector<lower=0>[N] yhat;
   vector[C] log_kq = qconst + x_clone * dq + cv[,1];
-  vector[C] log_td = tconst + x_clone * dt + cv[,2];
-  vector[C] log_kd = dconst + x_clone * dd + cv[,3];
+  vector[C] log_td = x_clone * dt + cv[,2];
+  vector[C] log_kd = x_clone * dd + cv[,3];
   {
     vector[N] x_small;
     for (n in 1:N){
@@ -68,12 +69,11 @@ model {
   log_kq ~ normal(prior_kq[1], prior_kq[2]);
   log_td ~ normal(prior_td[1], prior_td[2]);
   log_kd ~ normal(prior_kd[1], prior_kd[2]);
-  dq ~ normal(0, 0.3);
-  dt ~ normal(0, 0.3);
-  dd ~ normal(0, 0.3);
+  dq ~ normal(0, prior_sd_dq);
+  dt ~ normal(0, prior_sd_dt);
+  dd ~ normal(0, prior_sd_dd);
   // multilevel priors
-  sd_cv ~ lognormal(-1.61, 0.298);  // ~99% of prior mass between 0.1 and 0.4
-  L_cv ~ lkj_corr_cholesky(2);
+  sd_cv ~ lognormal(prior_sd_cv[1], prior_sd_cv[2]);
   to_vector(cv_z) ~ normal(0, 1);
   // likelihood
   if (likelihood){
@@ -82,9 +82,18 @@ model {
   }
 }
 generated quantities {
-  matrix[3,3] corr_cv = L_cv * L_cv';
   vector[R] llik = rep_vector(0, R);
   vector[N_test] yrep;
+  vector[K] avg_delay;
+  avg_delay[1] = exp(dt[1]) + inv(exp(dd[1]));
+  if (K >= 3){
+    for (k in 2:3){
+      avg_delay[k] = exp(dt[k] + dt[1]) + inv(exp(dd[k] + dd[1]));
+    }
+  }
+  if (K >= 4){
+    avg_delay[4] = exp(sum(dt[1:4])) + inv(exp(sum(dd[1:4])));
+  }
   for (n in 1:N_test){
     int r = replicate_test[n];
     int c = clone[r];
