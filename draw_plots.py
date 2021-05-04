@@ -4,6 +4,7 @@ import arviz as az
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+from matplotlib.cm import tab20 as cm
 
 from fit_models import (CSV_FILE, INFD_DIR, LOO_DIR, MODEL_SETS,
                         TREATMENT_TO_MODEL_SET, TREATMENTS, X_COLS)
@@ -126,6 +127,41 @@ def plot_timecourses(msmts, infd, run_name):
 
 def main():
     plt.style.use(MPL_STYLE)
+
+    # null model demonstration
+    infd = az.from_netcdf("results/infd/infd_puromycin_m2_null.ncdf")
+    msmts = prepare_data(pd.read_csv(CSV_FILE), treatment="15ug/mL Puromycin")
+    clone_to_design = msmts.groupby("clone")["design"].first()
+    cv_qs = (
+        infd.posterior["cv"]
+        .quantile([0.1, 0.9], dim=["chain", "draw"])
+        .to_dataframe()
+        .join(clone_to_design, on="clone")
+        .reset_index()
+        .pivot(columns="quantile", values="cv", index=["clone", "design", "cv_effects"])
+        .reset_index()
+    )
+    eff_to_title = {"d": "$k_d$", "tau": "$\\tau$", "q": "$k_q$"}
+    f, axes = plt.subplots(1, 2, figsize=[10, 10])
+    for (eff, df), ax in zip(
+        cv_qs.loc[lambda df: df["cv_effects"] != "q"].groupby("cv_effects"), axes
+    ):
+        ax.set_title(f"{eff_to_title[eff]} Clone effects (90% CI)")
+        y = np.linspace(0, 1, df["clone"].nunique())
+        design_fct = pd.factorize(df["design"])[0]
+        colors = [cm(i) for i in design_fct]
+        ax.hlines(y, df[0.1], df[0.9], colors=colors)
+        ax.axvline(0, color="r")
+        if ax == axes[0]:
+            ax.set_yticks(y)
+            ax.set_yticklabels(df["design"].values)
+            ax.set_ylabel("Design")
+    f.suptitle(
+        "Clonal variation effects mimic design effects in the null model "
+        + "for Puromycin challenged cells"
+    )
+    f.savefig(os.path.join(PLOT_DIR, "null_model_demo.png"))
+
     for treatment_label, treatment in TREATMENTS.items():
         for model_name, xname in MODEL_SETS[TREATMENT_TO_MODEL_SET[treatment_label]]:
             x_cols = X_COLS[xname]
