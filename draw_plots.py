@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from matplotlib.cm import tab20 as cm
 
 from fit_models import (CSV_FILE, INFD_DIR, LOO_DIR, MODEL_SETS,
-                        TREATMENT_TO_MODEL_SET, TREATMENTS, X_COLS)
+                        TREATMENT_TO_MODEL_SET, TREATMENTS)
 from munging import prepare_data
 
 MPL_STYLE = "sparse.mplstyle"
@@ -164,7 +164,6 @@ def main():
 
     for treatment_label, treatment in TREATMENTS.items():
         for model_name, xname in MODEL_SETS[TREATMENT_TO_MODEL_SET[treatment_label]]:
-            x_cols = X_COLS[xname]
             run_name = f"{treatment_label}_{model_name}_{xname}"
             print(f"Drawing plots for model {run_name}")
             msmts = prepare_data(pd.read_csv(CSV_FILE), treatment=treatment)
@@ -178,7 +177,7 @@ def main():
             infd_file = os.path.join(INFD_DIR, f"infd_{run_name}.ncdf")
             infd = az.from_netcdf(infd_file)
             ## Effects
-            if len(x_cols) > 1:
+            if xname != "null":
                 f, axes = plot_design_qs(infd)
                 f.savefig(
                     os.path.join(PLOT_DIR, f"design_param_qs_{run_name}.png"),
@@ -200,7 +199,7 @@ def main():
             )
             ## KDE and trace of sampled values
             axes = az.plot_trace(infd, var_names=["avg_delay"], combined=True)
-            if len(x_cols) > 1:
+            if xname != "null":
                 kde_axis = axes[0][0]
                 kde_axis.legend(
                     kde_axis.get_lines()[:4], infd.posterior.coords["design"].values[:4]
