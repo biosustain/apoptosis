@@ -3,7 +3,7 @@
 BIBLIOGRAPHY = bibliography.bib
 SAMPLES = $(shell find results/samples -name "*.csv")
 LOGS = $(shell find results/samples -name "*.txt")
-PLOTS = $(shell find results -name "*.png")
+PLOTS = $(shell find results/plots -name "*.svg")
 STAN_FILES =                      \
   model_kq_design_effects         \
   model_kq_design_effects.hpp     \

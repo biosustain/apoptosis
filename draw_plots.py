@@ -160,7 +160,7 @@ def main():
         "Clonal variation effects mimic design effects in the null model "
         + "for Puromycin challenged cells"
     )
-    f.savefig(os.path.join(PLOT_DIR, "null_model_demo.png"))
+    f.savefig(os.path.join(PLOT_DIR, "null_model_demo.svg"))
 
     for treatment_label, treatment in TREATMENTS.items():
         for model_name, xname in MODEL_SETS[TREATMENT_TO_MODEL_SET[treatment_label]]:
@@ -180,13 +180,13 @@ def main():
             if xname != "null":
                 f, axes = plot_design_qs(infd)
                 f.savefig(
-                    os.path.join(PLOT_DIR, f"design_param_qs_{run_name}.png"),
+                    os.path.join(PLOT_DIR, f"design_param_qs_{run_name}.svg"),
                     bbox_inches="tight",
                 )
             ## Measurement and simulated timecourse profiles
             f, axes = plot_timecourses(msmts, infd, run_name)
             f.savefig(
-                os.path.join(PLOT_DIR, f"timecourses_{run_name}.png"),
+                os.path.join(PLOT_DIR, f"timecourses_{run_name}.svg"),
                 bbox_inches="tight",
             )
             ## LOO (reloo) scores
@@ -194,7 +194,7 @@ def main():
             plt.xlabel("LOO Score")
             plt.title(f"{treatment_label}")
             plt.savefig(
-                os.path.join(PLOT_DIR, f"model_RELOO_comparison_{treatment_label}.png"),
+                os.path.join(PLOT_DIR, f"model_RELOO_comparison_{treatment_label}.svg"),
                 bbox_inches="tight",
             )
             ## KDE and trace of sampled values
@@ -205,7 +205,7 @@ def main():
                     kde_axis.get_lines()[:4], infd.posterior.coords["design"].values[:4]
                 )
             plt.savefig(
-                os.path.join(PLOT_DIR, f"sampled_params_{run_name}.png"),
+                os.path.join(PLOT_DIR, f"sampled_params_{run_name}.svg"),
                 bbox_inches="tight",
             )
             plt.close("all")

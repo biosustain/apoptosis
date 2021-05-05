@@ -287,6 +287,8 @@ SE $\Delta$elpd shows the estimated standard error of this difference.
 | m2_ab  | -13.971595        | 19.677542        |  3.653088        |  6.946778        | 
 | null   | -19.691865        | 19.892146        |  9.373358        |  6.620852        |
 
+![Sodium butyrate treatment RELOO comparison](./results/plots/model_RELOO_comparison_sodium_butyrate.svg)
+
 **Puromycin**
 
 | Model  | elpd              | SE epld          | $\Delta$elpd     | SE $\Delta$elpd  |
@@ -297,6 +299,7 @@ SE $\Delta$elpd shows the estimated standard error of this difference.
 |m1_ab   | -36.551747        | 32.076168        | 13.778482        |  12.338352       |
 |null    | -80.363992        | 19.570511        | 57.590727        |  16.831911       |
 
+![Puromycin treatment RELOO comparison](./results/plots/model_RELOO_comparison_puromycin.svg)
 
 We noted that the simplest and easiest to interpret model design `m2_ab` was
 easily within one standard error of the best leave-one-timecourse-out elpd for
@@ -347,37 +350,37 @@ any impact from the designs on the speed of transition to growth arrest.
 
 | Posterior intervals for design level parameters, treatment 15ug/mL Puromycin, design m1_abc |
 | :----------------------------------------------------------: |
-| ![Posterior intervals for design level parameters, treatment 15ug/mL Puromycin, design m1_abc](./results/plots/design_param_qs_puromycin_m1_abc.png) |
+| ![Posterior intervals for design level parameters, treatment 15ug/mL Puromycin, design m1_abc](./results/plots/design_param_qs_puromycin_m1_abc.svg) |
 
 | Posterior intervals for design level parameters, treatment 15ug/mL Puromycin, design m1_ab |
 | :----------------------------------------------------------: |
-| ![Posterior intervals for design level parameters, treatment 15ug/mL Puromycin, design m1_ab](results/plots/design_param_qs_puromycin_m1_ab.png) |
+| ![Posterior intervals for design level parameters, treatment 15ug/mL Puromycin, design m1_ab](results/plots/design_param_qs_puromycin_m1_ab.svg) |
 
 | Posterior intervals for design level parameters, treatment 15ug/mL Puromycin, design m2_abc |
 | :----------------------------------------------------------: |
-| ![Posterior intervals for design level parameters, treatment 15ug/mL Puromycin, design m2_abc](results/plots/design_param_qs_puromycin_m2_abc.png) |
+| ![Posterior intervals for design level parameters, treatment 15ug/mL Puromycin, design m2_abc](results/plots/design_param_qs_puromycin_m2_abc.svg) |
 
 | Posterior intervals for design level parameters, treatment 15ug/mL Puromycin, design m2_ab |
 | :----------------------------------------------------------: |
-| ![Posterior intervals for design level parameters, treatment 15ug/mL Puromycin, design m2_ab](results/plots/design_param_qs_puromycin_m2_ab.png) |
+| ![Posterior intervals for design level parameters, treatment 15ug/mL Puromycin, design m2_ab](results/plots/design_param_qs_puromycin_m2_ab.svg) |
 
 | Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m1_abc |
 | :----------------------------------------------------------: |
-| ![Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m1_abc](results/plots/design_param_qs_sodium_butyrate_m1_abc.png) |
+| ![Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m1_abc](results/plots/design_param_qs_sodium_butyrate_m1_abc.svg) |
 
 
 
 | Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m1_ab |
 | :----------------------------------------------------------: |
-| ![Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m1_ab](results/plots/design_param_qs_sodium_butyrate_m1_ab.png) |
+| ![Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m1_ab](results/plots/design_param_qs_sodium_butyrate_m1_ab.svg) |
 
 | Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m2_abc |
 | :----------------------------------------------------------: |
-| ![Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m2_abc](results/plots/design_param_qs_sodium_butyrate_m2_abc.png) |
+| ![Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m2_abc](results/plots/design_param_qs_sodium_butyrate_m2_abc.svg) |
 
 | Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m2_ab |
 | :----------------------------------------------------------: |
-| ![Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m2_ab](results/plots/design_param_qs_sodium_butyrate_m2_ab.png) |
+| ![Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m2_ab](results/plots/design_param_qs_sodium_butyrate_m2_ab.svg) |
 
 
 
