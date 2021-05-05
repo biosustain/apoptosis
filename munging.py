@@ -1,5 +1,28 @@
 import pandas as pd
 
+DESIGN_AB = {
+    "Bak-,Bax-": "AB",
+    "Bak-,Bax-,Bok-": "AB",
+    "Bak-,Bok-": "A",
+    "Bax-,Bok-": "B",
+    "Empty": "BASE",
+    "None": "BASE",
+    "Bok-": "BASE",
+    "Bak-": "A",
+    "Bax-": "B",
+}
+DESIGN_ABC = {
+    "Bak-,Bax-": "AB",
+    "Bak-,Bax-,Bok-": "ABC",
+    "Bak-,Bok-": "AC",
+    "Bax-,Bok-": "BC",
+    "Empty": "BASE",
+    "None": "BASE",
+    "Bok-": "C",
+    "Bak-": "A",
+    "Bax-": "B",
+}
+
 
 def stan_factorize(s_in, first=None):
     values = list(s_in.unique())
@@ -32,7 +55,11 @@ def prepare_data(raw: pd.DataFrame, treatment: str) -> pd.DataFrame:
         ]
         .assign(
             baseline=1,
+            design_ab=lambda df: df["design"].map(DESIGN_AB),
+            design_abc=lambda df: df["design"].map(DESIGN_ABC),
             design_fct=lambda df: stan_factorize(df["design"], first="Empty"),
+            design_ab_fct=lambda df: stan_factorize(df["design_ab"], first="BASE"),
+            design_abc_fct=lambda df: stan_factorize(df["design_abc"], first="BASE"),
             clone_fct=lambda df: stan_factorize(df["clone"]),
             replicate_fct=lambda df: stan_factorize(df["replicate"]),
             is_A=lambda df: df["design"].str.contains("Bak"),

@@ -7,7 +7,7 @@ from cmdstanpy import CmdStanModel
 
 from fit_models import (CSV_FILE, INFD_DIR, LOO_DIR, MODEL_SETS, OUTPUT_DIR,
                         PRIORS, STAN_FILES, TREATMENT_TO_MODEL_SET, TREATMENTS,
-                        X_COLS, get_infd_kwargs, get_stan_input)
+                        get_infd_kwargs, get_stan_input)
 from loo_compare import compare
 from munging import prepare_data
 
@@ -15,8 +15,8 @@ SAMPLE_CONFIG = dict(
     show_progress=False,
     save_warmup=False,
     inits=0,
-    iter_warmup=300,
-    iter_sampling=300,
+    iter_warmup=200,
+    iter_sampling=200,
     chains=1,
     seed=12345,
 )
@@ -24,10 +24,10 @@ K_THRESHOLD = 0.7
 
 
 class CustomSamplingWrapper(az.SamplingWrapper):
-    def __init__(self, msmts, priors, x_cols, **super_kwargs):
+    def __init__(self, msmts, priors, design_col, **super_kwargs):
         self.msmts = msmts
         self.priors = priors
-        self.x_cols = x_cols
+        self.design_col = design_col
         super(CustomSamplingWrapper, self).__init__(**super_kwargs)
 
     def sample(self, data):
@@ -45,7 +45,7 @@ class CustomSamplingWrapper(az.SamplingWrapper):
 
     def sel_observations(self, idx):
         """Construct a stan input where replicate idx is out-of-sample."""
-        original = get_stan_input(self.msmts, self.priors, self.x_cols)
+        original = get_stan_input(self.msmts, self.priors, self.design_col)
         m_test = self.msmts.loc[lambda df: df["replicate_fct"].eq(idx[0] + 1)]
         m_train = self.msmts.drop(m_test.index)
         d_test = original.copy()
@@ -65,7 +65,7 @@ def main():
         loos = {}
         for model_name, xname in MODEL_SETS[TREATMENT_TO_MODEL_SET[treatment_label]]:
             stan_file = STAN_FILES[model_name]
-            x_cols = X_COLS[xname]
+            design_col = "design_" + xname
             run_name = f"{treatment_label}_{model_name}_{xname}"
             loo_file = os.path.join(LOO_DIR, f"loo_{run_name}.pkl")
             infd_file = os.path.join(INFD_DIR, f"infd_{run_name}.ncdf")
@@ -77,7 +77,7 @@ def main():
             infd_orig = az.from_netcdf(infd_file)
             with open(json_file, "r") as f:
                 stan_input = json.load(f)
-            infd_kwargs = get_infd_kwargs(msmts, x_cols, stan_input)
+            infd_kwargs = get_infd_kwargs(msmts, design_col, stan_input)
             sw = CustomSamplingWrapper(
                 model=model,
                 idata_orig=infd_orig,
@@ -85,7 +85,7 @@ def main():
                 idata_kwargs=infd_kwargs,
                 msmts=msmts,
                 priors=PRIORS,
-                x_cols=x_cols,
+                design_col=design_col,
             )
             rl = az.reloo(sw, loo_orig=loo_orig, k_thresh=K_THRESHOLD)
             rl.to_pickle(os.path.join(LOO_DIR, f"reloo_{run_name}.pkl"))
