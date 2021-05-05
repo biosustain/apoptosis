@@ -5,14 +5,22 @@ implementation, and presents the results.
 
 ## Background
 
-The aim of this analysis is to describe time course data about the viable cell density of
-CHO cell cultures that were given cytotoxic treatments that induce cell death through a
-process called apoptosis. Various single and combinatorial knockout cell lines ($\Delta bak1$, $\Delta bax$, and $\Delta bok$) were generated with the aim of testing apoptosis resistance. The macroscopic process of death was of interest in this study. A population balance model was generated to describe the proposed phenomena of quiescence, delay until death commitment, and the cell death. 
+The aim of this analysis is to describe time course data about the viable cell
+density of CHO cell cultures that were given cytotoxic treatments that induce
+cell death through a process called apoptosis. Various single and combinatorial
+knockout cell lines ($\Delta bak1$, $\Delta bax$, and $\Delta bok$) were
+generated with the aim of testing apoptosis resistance. The macroscopic process
+of death was of interest in this study. A population balance model was
+generated to describe the proposed phenomena of quiescence, delay until death
+commitment, and the cell death.
 
 ## Methods
 ### Population balance model formulation
 
-Time evolution of cell state populations is first described as a system of differential equations for which an analytical solution is determined and used for parameter estimation. We assume that in this scenario viable cells exist in four states:
+Time evolution of cell state populations is first described as a system of
+differential equations for which an analytical solution is determined and used
+for parameter estimation. We assume that in this scenario viable cells exist in
+four states:
 
 - $R$ replicative cells, growing at a rate of $\mu R(t)$, where $t$ is the current time
   and $R(t)$ is the current density of replicative cells
@@ -23,12 +31,21 @@ Time evolution of cell state populations is first described as a system of diffe
 - Dead, transferring from death committed at a rate of $k_d Q_c(t)$, where
   $Q_c(t)$ is the density of death-committed cells at time $t$.
 
-The system of ordinary differential equations (containing a [delay differential equations](https://en.wikipedia.org/wiki/Delay_differential_equation)) can be solved analytically, so that the density at a given time can be found as a function of the parameters $\mu$, $\tau_D$ $k_q$, $k_d$ and the initial density of predicative cells $R_0$. 
+The system of ordinary differential equations (containing a [delay differential
+equations](https://en.wikipedia.org/wiki/Delay_differential_equation)) can be
+solved analytically, so that the density at a given time can be found as a
+function of the parameters $\mu$, $\tau_D$ $k_q$, $k_d$ and the initial density
+of predicative cells $R_0$.
 
 **For cells which are able to replicate;**
 
-$$\frac{dR(t)}{dt}=(\mu-k_q)R(t)=\sigma_{\mu}R(t)$$
-Solving for the interval $0\leq t$, $$ R(t) = R_0 e^{\sigma_{\mu}t}$$
+$$
+\frac{dR(t)}{dt}=(\mu-k_q)R(t)=\sigma_{\mu}R(t)
+$$
+
+Solving for the interval $0\leq t$,
+
+$$ R(t) = R_0 e^{\sigma_{\mu}t}$$
 
 **For cells which are quiescent, but have not committed to a death transition;**
 
@@ -40,7 +57,9 @@ $$Q_a^{(1)}(t)= R_0 kq \int_{0}^{t=t} e^{\sigma_{\mu} t}\;dt = \frac{k_q R_o}{\s
 
 Now, for the interval $\tau_{D} \leq t$;
 
-$$Q_a^{(2)}(t)= k_q \int_{0}^{t=t} R(t)\;dt - k_q \int_{0}^{t-\tau_{D}} R(t)\; dt = \frac{k_q R_0}{\sigma_{\mu}}(e^{\sigma_{\mu}t} - e^{\sigma_{\mu}(t-\tau_{D})})$$
+$$Q_a^{(2)}(t)= k_q \int_{0}^{t=t} R(t)\;dt - k_q \int_{0}^{t-\tau_{D}} R(t)\;
+dt = \frac{k_q R_0}{\sigma_{\mu}}(e^{\sigma_{\mu}t} -
+e^{\sigma_{\mu}(t-\tau_{D})})$$
 
 **For cells which have committed to death and are transitioning to dead cells;**
 
@@ -54,16 +73,18 @@ Using the integrating factor $e^{\int k_d \;dt} = e^{k_d t}$
 
 $$e^{k_d t}Q_c(t) = k_q R_0 \int_{0}^{x=t-\tau_D} e^{k_d (x+\tau_{D})} e^{\sigma_{\mu}x} \;dx$$ where $x=t-\tau_{D}$
 
-Yielding, $$Q_c(t) = \frac{k_q R_0}{\sigma_{\mu}+k_d} \; (e^{(\sigma_{\mu}+k_d)(t-\tau_D)} e^{k_d (t-\tau_{D})} - e^{k_d (t-\tau_{D})}) \; e^{-k_d t}$$
+Yielding, $$Q_c(t) = \frac{k_q R_0}{\sigma_{\mu}+k_d} \;
+(e^{(\sigma_{\mu}+k_d)(t-\tau_D)} e^{k_d (t-\tau_{D})} - e^{k_d (t-\tau_{D})})
+\; e^{-k_d t}$$
 
 Total quiescent cells are taken as $Q(t) = Q_a(t)+Q_c(t)$ and total viable cells are taken as $X(t) = R(t)+Q_a(t)+Q_c(t)$ where,
-$$
+
 \begin{align*}
-\R(t) &= R_0 e^{\sigma_{\mu}t} \\
-\Q_a(t) &= \frac{k_qR_0}{\sigma_{\mu}}(e^{\sigma_{\mu}t}-1) - \frac{k_qR_0}{\sigma_{\mu}}(e^{\sigma_{\mu}(t-\tau_D)}-1) \times u(t) \\
-\Q_c(t) &= \frac{k_qR_0}{\sigma_{\mu}+k_d}(e^{(\sigma_{\mu}+k_d)(t-\tau_D)}e^{k_d \tau_D} - e^{k_d\tau_D})e^{-k_dt} \times u(t)
+R(t) &= R_0 e^{\sigma_{\mu}t} \\
+Q_a(t) &= \frac{k_qR_0}{\sigma_{\mu}}(e^{\sigma_{\mu}t}-1) - \frac{k_qR_0}{\sigma_{\mu}}(e^{\sigma_{\mu}(t-\tau_D)}-1) \times u(t) \\
+Q_c(t) &= \frac{k_qR_0}{\sigma_{\mu}+k_d}(e^{(\sigma_{\mu}+k_d)(t-\tau_D)}e^{k_d \tau_D} - e^{k_d\tau_D})e^{-k_dt} \times u(t)
 \end{align*}
-$$
+
 and $$u(t)=0$$ for $$t<\tau_D$$
 
 We have measurements of the total cell volume, i.e. $R(t) + Q_a(t) + Q_c(t)$ at
@@ -144,18 +165,19 @@ Code to generate figure 1:
 
 The clone-level vectors $\tau_D$ and $k_{d}$ are treated as determined by other
 parameters as follows:
-$$
+
 \begin{align*}
-\ln(\tau) &= \tau const + d_\tau * X + c_{tau} \\
-\ln(k_{d}) &= dconst + d_d * X + c_d
+\ln(\tau) &= \tau const + d_\tau + c_{tau} \\
+\ln(k_{d}) &= dconst + d_d + c_d
 \end{align*}
-$$
+
 In these equations 
 
 - $qconst$, $\tau const$ and $dconst$ are single unknown numbers representing
   the (log scale) mean parameter values with no interventions
 - $X$ is a matrix indicating which clones have which interventions
-- $d_\tau$ and $d_d$ are vectors of unknown intervention effects
+- $d_\tau$ and $d_d$ are vectors of unknown intervention effects, with the
+  parameter for the empty intervention fixed at zero.
 - $c_\tau$ and $c_d$ are vectors of unknown clone effects, representing random
   clonal variation.
   
@@ -165,15 +187,14 @@ at which cells transition from the normal state $R$ to the growth arrest state
 $Q_a$, we compared two different ways of modelling the clone-level vectors
 $k_q$. In the first model design M1, $k_q$ is treated like $\tau_D$ and $k_d$,
 i.e
-$$
-\begin{align*}
- \ln k_q &= qconst + d_q * X + c_q \\
- d_q &\sim N(0, 0.3)
-\end{align*}
-$$
 
+\begin{align*}
+\ln k_q &= qconst + d_q + c_q \\
+d_q &\sim N(0, 0.3)
+\end{align*}
 
 In the second design M2, we assume that there are no design-level effects, i.e.
+
 $$
 \ln k_q = qconst + c_q
 $$
@@ -189,37 +210,20 @@ distributions for $\tau_D$, $k_d$ and $k_q$ based on quantiles.
 
 The priors for the design effect parameters $d_\tau$ and $d_d$ were as follows:
 
-$$
 \begin{align*}
-    d_\tau &\sim N(0, 0.3) \\
-    d_d &\sim N(0, 0.3)
+d_\tau &\sim N(0, 0.3) \\
+d_d &\sim N(0, 0.3)
 \end{align*}
-$$
 
 
-The clonal variation parameters $c_\tau$, $c_q$ and $c_d$ have joint
-multivariate normal prior distribution:
-$$
+The clonal variation parameters $c_\tau$, $c_q$ and $c_d$ have independent
+normal prior distributions:
+
 \begin{align*}
-[c_\tau, c_q, c_d] &\sim multi\, normal(\mathbf{0}, \bar{\sigma}_c \cdot\Omega) \\
-\Omega &\sim lkj(2) \\
-\bar{\sigma}_c &\sim log\, normal(-1.61, 0.298)
+c_\tau &\sim normal(\mathbf{0}, 0.1) \\
+c_q &\sim normal(\mathbf{0}, 0.1) \\
+c_d &\sim normal(\mathbf{0}, 0.1)
 \end{align*}
-$$
-
-
-We used a multivariate normal distribution because we wanted to allow the
-possibility of correlations between clonal variation parameters: for example,
-if a certain clone has a very high death rate, this might predict a higher or
-lower rate of death-commitment.
-
-The prior for $\bar{\sigma}_c$ is informative, and was chosen based on scientific
-knowledge so as to place 99% prior mass between 0.1 and 0.4.
-
-In this equation, $lkj$ represents the Lewandowski, Kurowicka, and Joe
-distribution with shape parameter 2. See
-[@lewandowskiGeneratingRandomCorrelation2009] for discussion of why this is an
-appropriate default prior for correlation matrices.
 
 Other parameters have informative prior distributions based on scientific
 knowledge:
@@ -249,40 +253,50 @@ indicating that the approximation was inaccurate, we refitted models in
 order to find the exact leave-one-out log predictive density.
 
 We further evaluated our models using graphical posterior predictive checks and
-by inspecting the modelled parameter values.
+by inspecting the modelled parameter values. 
 
 For both treatments, the two models' estimated predictive performance was very
 similar.
 
 ## Results
 
-### Model comparison
-We tested four model designs on four treatments, finding their estimated log
-predictive density, or elpd, using the semi-approximate leave-one-timecourse-out
-process described above. The results for two treatments (puromycin and sodium butyrate) are presented in the following sections. 
 
-The models are listed in order of elpd. The column $\Delta$ elpd shows the estimated difference each
-model's elpd and that of the best model. The column SE $\Delta$elpd shows the
-estimated standard error of this difference.
+
+### Model comparison
+We tested four non-null model designs on four treatments, finding their
+estimated log predictive density, or elpd, using the semi-approximate
+leave-one-timecourse-out process described above. The results for two
+treatments (puromycin and sodium butyrate) are presented in the following
+sections.
+
+To verify that the design effects were informative, we also fit a null model
+with no design effects to the sodium butyrate and puromycin data. This model
+performed markedly worse according to our semi-approximate elpd test.
+
+The models are listed in order of elpd. The column $\Delta$ elpd shows the
+estimated difference each model's elpd and that of the best model. The column
+SE $\Delta$elpd shows the estimated standard error of this difference.
 
 **Sodium Butyrate**
 
 | Model  | elpd              | SE epld          | $\Delta$elpd     | SE $\Delta$elpd  |
 | ------ | ----------------- | ---------------- | ---------------- | ---------------- |
-| m2_abc | -9.31532373066621 | 16.0548075629413 | 0                | 0                |
-| m2_ab  | -10.6385539022638 | 17.6737463241812 | 1.32323017159761 | 6.46573603463496 |
-| m1_ab  | -11.6227679899569 | 18.2307846823949 | 2.3074442592907  | 7.00567279631445 |
-| m1_abc | -17.4088959201502 | 19.4162975482087 | 8.09357218948395 | 8.56357059034093 |
-
+| m1_abc | -10.318507        | 18.082562        |  0.000000        |  0.000000        |
+| m2_abc | -12.231568        | 19.599601        |  1.913061        |  8.365102        |
+| m1_ab  | -13.527470        | 19.563556        |  3.208962        |  6.505047        | 
+| m2_ab  | -13.971595        | 19.677542        |  3.653088        |  6.946778        | 
+| null   | -19.691865        | 19.892146        |  9.373358        |  6.620852        |
 
 **Puromycin**
 
 | Model  | elpd              | SE epld          | $\Delta$elpd     | SE $\Delta$elpd  |
 | ------ | ----------------- | ---------------- | ---------------- | ---------------- |
-| m2_abc | -28.1810141466218 | 25.6358282517735 | 0                | 0                |
-| m2_ab  | -31.9403767240144 | 26.545627275377  | 3.75936257739266 | 3.39158675109683 |
-| m1_ab  | -41.3603242121603 | 26.8268941870063 | 13.1793100655386 | 13.4492736733038 |
-| m1_abc | -56.7192786921449 | 33.9949242635703 | 28.5382645455231 | 17.5673616542797 |
+|m1_abc  | -22.773265        | 25.943790        |  0.000000        |   0.000000       |
+|m2_ab   | -24.677685        | 26.806294        |  1.904421        |   8.765275       |
+|m2_abc  | -32.542561        | 34.255283        |  9.769296        |  12.224642       |
+|m1_ab   | -36.551747        | 32.076168        | 13.778482        |  12.338352       |
+|null    | -80.363992        | 19.570511        | 57.590727        |  16.831911       |
+
 
 We noted that the simplest and easiest to interpret model design `m2_ab` was
 easily within one standard error of the best leave-one-timecourse-out elpd for
