@@ -70,10 +70,10 @@ def get_stan_input(msmts, priors, design_col):
     out = {
         **priors,
         **{
-            "N": len(msmts),
-            "N_test": len(msmts),
-            "R": msmts["replicate"].nunique(),
-            "C": msmts["clone"].nunique(),
+            "N": int(len(msmts)),
+            "N_test": int(len(msmts)),
+            "R": int(msmts["replicate"].nunique()),
+            "C": int(msmts["clone"].nunique()),
             "clone": msmts.groupby("replicate_fct")["clone_fct"].first().values,
             "replicate": msmts["replicate_fct"].values,
             "t": msmts["day"].values,
@@ -86,7 +86,7 @@ def get_stan_input(msmts, priors, design_col):
     }
     if "null" not in design_col:
         out["design"] = msmts.groupby("clone_fct")[design_col + "_fct"].first().values
-        out["D"] = msmts[design_col + "_fct"].max()
+        out["D"] = int(msmts[design_col + "_fct"].max())
     return out
 
 
