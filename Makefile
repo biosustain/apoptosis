@@ -11,7 +11,7 @@ STAN_FILES =                      \
   model_kq_no_design_effects.hpp
 LOO_FILES_PKL = $(shell find results/loo -name "*.pkl")
 LOO_FILES_CSV = $(shell find results/loo -name "*.csv")
-NCDF_FILES = $(shell find results/infd -name "*.ncdf")
+NCDF_FILES = $(shell find results/infd -name "*.nc")
 STAN_INPUT_FILES = $(shell find results -name "*.json")
 MARKDOWN_FILE = report.md
 PDF_FILE = report.pdf

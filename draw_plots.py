@@ -129,22 +129,23 @@ def main():
     plt.style.use(MPL_STYLE)
 
     # null model demonstration
-    infd = az.from_netcdf("results/infd/infd_puromycin_m2_null.ncdf")
+    infd = az.from_netcdf("results/infd/infd_puromycin_null_null.nc")
     msmts = prepare_data(pd.read_csv(CSV_FILE), treatment="15ug/mL Puromycin")
     clone_to_design = msmts.groupby("clone")["design"].first()
     cv_qs = (
-        infd.posterior["cv"]
+        infd.posterior[["cq", "cd", "ct"]]
         .quantile([0.1, 0.9], dim=["chain", "draw"])
         .to_dataframe()
         .join(clone_to_design, on="clone")
         .reset_index()
-        .pivot(columns="quantile", values="cv", index=["clone", "design", "cv_effects"])
+        .melt(id_vars=["clone", "design", "quantile"], value_vars=["cq", "cd", "ct"])
+        .pivot(columns="quantile", index=["clone", "design", "variable"], values="value")
         .reset_index()
     )
-    eff_to_title = {"d": "$k_d$", "tau": "$\\tau$", "q": "$k_q$"}
+    eff_to_title = {"cd": "$k_d$", "ct": "$\\tau$", "cq": "$k_q$"}
     f, axes = plt.subplots(1, 2, figsize=[10, 10])
     for (eff, df), ax in zip(
-        cv_qs.loc[lambda df: df["cv_effects"] != "q"].groupby("cv_effects"), axes
+        cv_qs.loc[lambda df: df["variable"] != "cq"].groupby("variable"), axes
     ):
         ax.set_title(f"{eff_to_title[eff]} Clone effects (90% CI)")
         y = np.linspace(0, 1, df["clone"].nunique())
@@ -174,7 +175,7 @@ def main():
                 .rename(columns={"Unnamed: 0": "index"})
                 .set_index("index")
             )
-            infd_file = os.path.join(INFD_DIR, f"infd_{run_name}.ncdf")
+            infd_file = os.path.join(INFD_DIR, f"infd_{run_name}.nc")
             infd = az.from_netcdf(infd_file)
             ## Effects
             if xname != "null":

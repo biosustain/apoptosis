@@ -68,7 +68,7 @@ def main():
             design_col = "design_" + xname
             run_name = f"{treatment_label}_{model_name}_{xname}"
             loo_file = os.path.join(LOO_DIR, f"loo_{run_name}.pkl")
-            infd_file = os.path.join(INFD_DIR, f"infd_{run_name}.ncdf")
+            infd_file = os.path.join(INFD_DIR, f"infd_{run_name}.nc")
             json_file = os.path.join(OUTPUT_DIR, f"input_data_{run_name}.json")
             print(f"Running reloo analysis for model {run_name}...")
             model = CmdStanModel(stan_file=stan_file)
