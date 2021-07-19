@@ -52,6 +52,10 @@ for troubleshooting about this way of installing cmdstan.
 Finally, run the analysis with the following command:
 
 ```shell
-python3 run_model.py
+python3 fit_models.py
 ```
+Reloo model comparisons are then done by running the following command:
 
+```shell
+python3 run_reloo_analysis.py
+```
