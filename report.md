@@ -1,6 +1,6 @@
-# Statistical report
+# Model Formulation
 
-This document sets out our statistical model's assumptions, explains its
+This document sets out our delayed death model formulation and statistical model assumptions, explains its
 implementation, and presents the results.
 
 ## Background
@@ -32,16 +32,14 @@ four states:
   $Q_c(t)$ is the density of death-committed cells at time $t$.
 
 The system of ordinary differential equations (containing a [delay differential
-equations](https://en.wikipedia.org/wiki/Delay_differential_equation)) can be
+equation](https://en.wikipedia.org/wiki/Delay_differential_equation)) can be
 solved analytically, so that the density at a given time can be found as a
 function of the parameters $\mu$, $\tau_D$ $k_q$, $k_d$ and the initial density
 of predicative cells $R_0$.
 
 **For cells which are able to replicate;**
 
-$$
-\frac{dR(t)}{dt}=(\mu-k_q)R(t)=\sigma_{\mu}R(t)
-$$
+$$\frac{dR(t)}{dt}=(\mu-k_q)R(t)=\sigma_{\mu}R(t)$$
 
 Solving for the interval $0\leq t$,
 
@@ -79,11 +77,11 @@ Yielding, $$Q_c(t) = \frac{k_q R_0}{\sigma_{\mu}+k_d} \;
 
 Total quiescent cells are taken as $Q(t) = Q_a(t)+Q_c(t)$ and total viable cells are taken as $X(t) = R(t)+Q_a(t)+Q_c(t)$ where,
 
-\begin{align*}
+$$\begin{align*}
 R(t) &= R_0 e^{\sigma_{\mu}t} \\
 Q_a(t) &= \frac{k_qR_0}{\sigma_{\mu}}(e^{\sigma_{\mu}t}-1) - \frac{k_qR_0}{\sigma_{\mu}}(e^{\sigma_{\mu}(t-\tau_D)}-1) \times u(t) \\
-Q_c(t) &= \frac{k_qR_0}{\sigma_{\mu}+k_d}(e^{(\sigma_{\mu}+k_d)(t-\tau_D)}e^{k_d \tau_D} - e^{k_d\tau_D})e^{-k_dt} \times u(t)
-\end{align*}
+Q_c(t) &= \frac{k_qR_0}{\sigma_{\mu}+k_d}(e^{(\sigma_{\mu}+k_d)(t-\tau_D)}e^{k_d \tau_D} - e^{k_d\tau_D})e^{-k_dt} \times u(t) \\
+\end{align*}$$
 
 and $$u(t)=0$$ for $$t<\tau_D$$
 
@@ -166,10 +164,10 @@ Code to generate figure 1:
 The clone-level vectors $\tau_D$ and $k_{d}$ are treated as determined by other
 parameters as follows:
 
-\begin{align*}
+$$\begin{align*}
 \ln(\tau) &= \tau const + d_\tau + c_{tau} \\
 \ln(k_{d}) &= dconst + d_d + c_d
-\end{align*}
+\end{align*}$$
 
 In these equations 
 
@@ -180,7 +178,6 @@ In these equations
   parameter for the empty intervention fixed at zero.
 - $c_\tau$ and $c_d$ are vectors of unknown clone effects, representing random
   clonal variation.
-  
 
 To investigate whether the genetic interventions measurably affected the rate
 at which cells transition from the normal state $R$ to the growth arrest state
@@ -188,10 +185,10 @@ $Q_a$, we compared two different ways of modelling the clone-level vectors
 $k_q$. In the first model design M1, $k_q$ is treated like $\tau_D$ and $k_d$,
 i.e
 
-\begin{align*}
+$$\begin{align*}
 \ln k_q &= qconst + d_q + c_q \\
 d_q &\sim N(0, 0.3)
-\end{align*}
+\end{align*}$$
 
 In the second design M2, we assume that there are no design-level effects, i.e.
 
@@ -206,24 +203,23 @@ distributions for $\tau_D$, $k_d$ and $k_q$ based on quantiles.
 | --------- | ----------- | ------------ |
 | $\tau_D$  | 0.4         | 7.5          |
 | $k_q$     | 1           | 5            |
-| $k_d$     | 0.5         | 2.5          |
+| $k_d$     | 0.05        | 2.5          |
 
 The priors for the design effect parameters $d_\tau$ and $d_d$ were as follows:
 
-\begin{align*}
+$$\begin{align*}
 d_\tau &\sim N(0, 0.3) \\
 d_d &\sim N(0, 0.3)
-\end{align*}
-
+\end{align*}$$
 
 The clonal variation parameters $c_\tau$, $c_q$ and $c_d$ have independent
 normal prior distributions:
 
-\begin{align*}
+$$\begin{align*}
 c_\tau &\sim normal(\mathbf{0}, 0.1) \\
 c_q &\sim normal(\mathbf{0}, 0.1) \\
 c_d &\sim normal(\mathbf{0}, 0.1)
-\end{align*}
+\end{align*}$$
 
 Other parameters have informative prior distributions based on scientific
 knowledge:
@@ -255,62 +251,40 @@ order to find the exact leave-one-out log predictive density.
 We further evaluated our models using graphical posterior predictive checks and
 by inspecting the modelled parameter values. 
 
-For both treatments, the two models' estimated predictive performance was very
-similar.
-
 ## Results
-
-
 
 ### Model comparison
 We tested four non-null model designs on four treatments, finding their
 estimated log predictive density, or elpd, using the semi-approximate
-leave-one-timecourse-out process described above. The results for two
-treatments (puromycin and sodium butyrate) are presented in the following
+leave-one-timecourse-out process described above. The results are exemplified for puromycin treatment, and are presented in the following
 sections.
 
 To verify that the design effects were informative, we also fit a null model
-with no design effects to the sodium butyrate and puromycin data. This model
-performed markedly worse according to our semi-approximate elpd test.
+with no design effects. This model performed markedly worse according to our semi-approximate elpd test.
 
 The models are listed in order of elpd. The column $\Delta$ elpd shows the
 estimated difference each model's elpd and that of the best model. The column
 SE $\Delta$elpd shows the estimated standard error of this difference.
 
-**Sodium Butyrate**
+**RELOO Comparison results: Puromycin data**
 
-| Model  | elpd              | SE epld          | $\Delta$elpd     | SE $\Delta$elpd  |
-| ------ | ----------------- | ---------------- | ---------------- | ---------------- |
-| m1_abc | -10.318507        | 18.082562        |  0.000000        |  0.000000        |
-| m2_abc | -12.231568        | 19.599601        |  1.913061        |  8.365102        |
-| m1_ab  | -13.527470        | 19.563556        |  3.208962        |  6.505047        | 
-| m2_ab  | -13.971595        | 19.677542        |  3.653088        |  6.946778        | 
-| null   | -19.691865        | 19.892146        |  9.373358        |  6.620852        |
-
-![Sodium butyrate treatment RELOO comparison](./results/plots/model_RELOO_comparison_sodium_butyrate.svg)
-
-**Puromycin**
-
-| Model  | elpd              | SE epld          | $\Delta$elpd     | SE $\Delta$elpd  |
-| ------ | ----------------- | ---------------- | ---------------- | ---------------- |
-|m1_abc  | -22.773265        | 25.943790        |  0.000000        |   0.000000       |
-|m2_ab   | -24.677685        | 26.806294        |  1.904421        |   8.765275       |
-|m2_abc  | -32.542561        | 34.255283        |  9.769296        |  12.224642       |
-|m1_ab   | -36.551747        | 32.076168        | 13.778482        |  12.338352       |
-|null    | -80.363992        | 19.570511        | 57.590727        |  16.831911       |
+| Model  | elpd       | SE epld   | $\Delta$elpd | SE $\Delta$elpd |
+| ------ | ---------- | --------- | ------------ | --------------- |
+| m2_ab  | -22.132365 | 25.259048 | 0.000000     | 0.000000        |
+| m2_abc | -23.403847 | 27.501952 | 1.271481     | 7.795202        |
+| m1_abc | -32.594331 | 35.229694 | 10.46196     | 14.34333        |
+| m1_ab  | -33.396555 | 27.556028 | 11.26419     | 4.564483        |
+| null   | -92.364474 | 29.310052 | 70.23210     | 17.37136        |
 
 ![Puromycin treatment RELOO comparison](./results/plots/model_RELOO_comparison_puromycin.svg)
 
-We noted that the simplest and easiest to interpret model design `m2_ab` was
-easily within one standard error of the best leave-one-timecourse-out elpd for
-both treatments. We therefore chose to use this simpler model knowing that
-doing so did not entail a tangible sacrifice of predictive power.
+We noted that the simplest and easiest to interpret model design (`m2_ab`) scored highest in leave-one-timecourse-out elpd, and we therefore chose to use this simpler model knowing that doing so did not entail a tangible sacrifice of predictive power.
 
 
 ### Observed vs modelled timecourses
 
 The figures in this section show observed timecourses for each design under the
-15ug/mL puromycin treatment alongside 99% posterior predictive intervals, for
+15 ug/mL Puromycin treatment alongside 99% posterior predictive intervals, for
 each model and treatment.
 
 The modelled and observed timecourses appear qualitatively similar in all
@@ -324,14 +298,6 @@ cases, suggesting that none of the models are dramatically mis-specified.
 
 ![Puromycin treatment, design m2_ab](results/plots/timecourses_puromycin_m2_ab.svg)
 
-![Sodium Butyrate treatment, design m1_abc](results/plots/timecourses_sodium_butyrate_m1_abc.svg)
-
-![Sodium Butyrate treatment, design m1_ab](results/plots/timecourses_sodium_butyrate_m1_ab.svg)
-
-![Sodium Butyrate treatment, design m2_abc](results/plots/timecourses_sodium_butyrate_m2_abc.svg)
-
-![Sodium Butyrate treatment, design m2_ab](results/plots/timecourses_sodium_butyrate_m2_ab.svg)
-
 
 
 ### Posterior distributions of design parameters
@@ -341,8 +307,7 @@ log-scale design-level effects, relative to the control experiment.
 
 Some models are able to detect clear design effects with respect to the $\tau$
 and $k_d$ parameters. For example, for model `m2_ab` the posterior for the
-effect of design B on the delay parameter $\tau_d$ concentrates above zero for
-both treatments.
+effect of design B on the delay parameter $\tau_d$ concentrates above zero.
 
 On the other hand, all of the posterior intervals for design-specific effects
 on the parameter $k_q$ include zero, showing that none of the models can detect
@@ -364,23 +329,7 @@ any impact from the designs on the speed of transition to growth arrest.
 | :----------------------------------------------------------: |
 | ![Posterior intervals for design level parameters, treatment 15ug/mL Puromycin, design m2_ab](results/plots/design_param_qs_puromycin_m2_ab.svg) |
 
-| Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m1_abc |
-| :----------------------------------------------------------: |
-| ![Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m1_abc](results/plots/design_param_qs_sodium_butyrate_m1_abc.svg) |
 
-
-
-| Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m1_ab |
-| :----------------------------------------------------------: |
-| ![Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m1_ab](results/plots/design_param_qs_sodium_butyrate_m1_ab.svg) |
-
-| Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m2_abc |
-| :----------------------------------------------------------: |
-| ![Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m2_abc](results/plots/design_param_qs_sodium_butyrate_m2_abc.svg) |
-
-| Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m2_ab |
-| :----------------------------------------------------------: |
-| ![Posterior intervals for design level parameters, treatment 20mM Sodium Butyrate, design m2_ab](results/plots/design_param_qs_sodium_butyrate_m2_ab.svg) |
 
 
 
