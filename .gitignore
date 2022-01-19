@@ -13,6 +13,7 @@ reading
 results/loo/*.pkl
 results/loo/*.csv
 results/infd/*.ncdf
+results/infd/*.nc
 results/plots/*.png
 results/plots/*.svg
 results/input_data*
