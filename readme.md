@@ -59,3 +59,9 @@ Reloo model comparisons are then done by running the following command:
 ```shell
 python3 run_reloo_analysis.py
 ```
+
+Plots can be drawn using the following the following command:
+
+```shell
+python3 draw_plots.py
+```
