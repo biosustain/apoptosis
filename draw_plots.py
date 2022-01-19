@@ -198,7 +198,7 @@ def main():
                 os.path.join(PLOT_DIR, f"model_RELOO_comparison_{treatment_label}.svg"),
                 bbox_inches="tight",
             )
-            ## KDE and trace of sampled values
+            ## KDE and trace of average delay to death
             axes = az.plot_trace(infd, var_names=["avg_delay"], combined=True)
             if xname != "null":
                 kde_axis = axes[0][0]
@@ -209,6 +209,17 @@ def main():
                 os.path.join(PLOT_DIR, f"sampled_params_{run_name}.svg"),
                 bbox_inches="tight",
             )
+            ## KDE and trace of sampled values
+            if xname != "null":
+                axes = az.plot_trace(infd, var_names=["tauD", "k_d"], combined=True)
+                kde_axis = axes[0][0]
+                kde_axis.legend(
+                    kde_axis.get_lines()[:4], infd.posterior.coords["design"].values[:4]
+                )
+                plt.savefig(
+                    os.path.join(PLOT_DIR, f"sampled_params_posterior_{run_name}.svg"),
+                    bbox_inches="tight"
+                    )
             plt.close("all")
 
 

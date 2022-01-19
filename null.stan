@@ -77,6 +77,8 @@ generated quantities {
   vector[R] llik = rep_vector(0, R);
   vector[N_test] yrep;
   real avg_delay = exp(tconst) + inv(exp(dconst));
+  real tauD = exp(tconst);
+  real k_d = exp(dconst);
   for (n in 1:N_test){
     int r = replicate_test[n];
     int c = clone[r];
