@@ -8,7 +8,6 @@ input_data.json
 model
 validation_model
 *.hpp
-*.pdf
 reading
 results/loo/*.pkl
 results/loo/*.csv
