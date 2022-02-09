@@ -1,7 +1,7 @@
 # Model Formulation
 
-This document sets out our delayed death model formulation and statistical model assumptions, explains its
-implementation, and presents the results.
+This document sets out our delayed death model formulation and statistical model
+assumptions, explains its implementation, and presents the results.
 
 ## Background
 
@@ -77,11 +77,11 @@ Yielding, $$Q_c(t) = \frac{k_q R_0}{\sigma_{\mu}+k_d} \;
 
 Total quiescent cells are taken as $Q(t) = Q_a(t)+Q_c(t)$ and total viable cells are taken as $X(t) = R(t)+Q_a(t)+Q_c(t)$ where,
 
-$$\begin{align*}
+\begin{align*}
 R(t) &= R_0 e^{\sigma_{\mu}t} \\
 Q_a(t) &= \frac{k_qR_0}{\sigma_{\mu}}(e^{\sigma_{\mu}t}-1) - \frac{k_qR_0}{\sigma_{\mu}}(e^{\sigma_{\mu}(t-\tau_D)}-1) \times u(t) \\
-Q_c(t) &= \frac{k_qR_0}{\sigma_{\mu}+k_d}(e^{(\sigma_{\mu}+k_d)(t-\tau_D)}e^{k_d \tau_D} - e^{k_d\tau_D})e^{-k_dt} \times u(t) \\
-\end{align*}$$
+Q_c(t) &= \frac{k_qR_0}{\sigma_{\mu}+k_d}(e^{(\sigma_{\mu}+k_d)(t-\tau_D)}e^{k_d \tau_D} - e^{k_d\tau_D})e^{-k_dt} \times u(t) 
+\end{align*}
 
 and $$u(t)=0$$ for $$t<\tau_D$$
 
@@ -164,10 +164,10 @@ Code to generate figure 1:
 The clone-level vectors $\tau_D$ and $k_{d}$ are treated as determined by other
 parameters as follows:
 
-$$\begin{align*}
+\begin{align*}
 \ln(\tau) &= \tau const + d_\tau + c_{tau} \\
 \ln(k_{d}) &= dconst + d_d + c_d
-\end{align*}$$
+\end{align*}
 
 In these equations 
 
@@ -185,10 +185,10 @@ $Q_a$, we compared two different ways of modelling the clone-level vectors
 $k_q$. In the first model design M1, $k_q$ is treated like $\tau_D$ and $k_d$,
 i.e
 
-$$\begin{align*}
+\begin{align*}
 \ln k_q &= qconst + d_q + c_q \\
 d_q &\sim N(0, 0.3)
-\end{align*}$$
+\end{align*}
 
 In the second design M2, we assume that there are no design-level effects, i.e.
 
@@ -207,19 +207,19 @@ distributions for $\tau_D$, $k_d$ and $k_q$ based on quantiles.
 
 The priors for the design effect parameters $d_\tau$ and $d_d$ were as follows:
 
-$$\begin{align*}
+\begin{align*}
 d_\tau &\sim N(0, 0.3) \\
 d_d &\sim N(0, 0.3)
-\end{align*}$$
+\end{align*}
 
 The clonal variation parameters $c_\tau$, $c_q$ and $c_d$ have independent
 normal prior distributions:
 
-$$\begin{align*}
+\begin{align*}
 c_\tau &\sim normal(\mathbf{0}, 0.1) \\
 c_q &\sim normal(\mathbf{0}, 0.1) \\
 c_d &\sim normal(\mathbf{0}, 0.1)
-\end{align*}$$
+\end{align*}
 
 Other parameters have informative prior distributions based on scientific
 knowledge:
