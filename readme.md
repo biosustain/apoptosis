@@ -35,14 +35,14 @@ following shell command will work on mac and linux provided there is already a
 working C++ toolchain:
 
 ```shell
-install_cmdstan
+install_cmdstan --version 2.26.1
 ```
 
 On windows these powershell commands should work
 
 ```shell
 python -m cmdstanpy.install_cxx_toolchain
-python -m cmdstanpy.install_cmdstan --compiler
+python -m cmdstanpy.install_cmdstan --compiler --version 2.26.1
 ```
 
 See
@@ -52,12 +52,12 @@ for troubleshooting about this way of installing cmdstan.
 Finally, run the analysis with the following command:
 
 ```shell
-python3 fit_models.py
+CMDSTAN=~/.cmdstan/2.26.1 python3 fit_models.py
 ```
 Reloo model comparisons are then done by running the following command:
 
 ```shell
-python3 run_reloo_analysis.py
+CMDSTAN=~/.cmdstan/2.26.1 python3 run_reloo_analysis.py
 ```
 
 Plots can be drawn using the following the following command:
